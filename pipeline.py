@@ -1,10 +1,11 @@
 """
-pipeline.py — SPHEREx epoch-subtraction and anomaly-detection pipeline.
+pipeline.py — Robust SPHEREx epoch-subtraction and anomaly-detection pipeline.
 
 Features:
 - Query IRSA TAP for SPHEREx observations
-- DataLink resolver for fast spatial cutouts
-- Multi-Extension FITS loader with ZODI background subtraction and proper flag filtering:
+- DataLink resolver with HTTP retry & backoff
+- Robust multi-extension FITS loader with local caching:
+  ZODI background subtraction and proper flag filtering:
   preserves real astronomical sources (bit 21 = 2097152) and benign flag 2.
 - WCS reprojection and epoch difference calculation
 - Statistical anomaly detection (sigma-clipped local peak/dipole identification)
@@ -15,9 +16,15 @@ import os
 os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
 
 import io
+import time
+import hashlib
 import base64
+from pathlib import Path
 import numpy as np
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -31,6 +38,35 @@ from astropy.stats import sigma_clipped_stats
 from reproject import reproject_interp
 from scipy.ndimage import maximum_filter, minimum_filter
 import pyvo
+
+
+# Local cache directory for downloaded FITS cutouts
+CACHE_DIR = Path("/tmp/spherex_cutouts")
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# HTTP Session with Automatic Retries
+# ---------------------------------------------------------------------------
+
+def get_http_session(retries=3, backoff_factor=1.0):
+    """Create a requests session with automatic retries on transient server errors."""
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=[429, 500, 502, 503, 504],
+        raise_on_status=False
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+HTTP_SESSION = get_http_session()
 
 
 # ---------------------------------------------------------------------------
@@ -77,11 +113,7 @@ def query_spherex_cutouts(ra, dec, size=0.05, bandpass="SPHEREx-D2"):
 
 def resolve_datalink_to_cutout_url(datalink_url, ra, dec, size=0.05):
     """
-    Resolve a DataLink access_url to a direct FITS cutout URL.
-
-    The IRSA DataLink response embeds a cutout service descriptor.
-    We build the cutout URL from the service's accessURL base,
-    the file path, and the requested (ra, dec, size).
+    Resolve a DataLink access_url to a direct FITS cutout URL with retries.
 
     Parameters
     ----------
@@ -97,51 +129,83 @@ def resolve_datalink_to_cutout_url(datalink_url, ra, dec, size=0.05):
     str
         Direct URL to the FITS cutout file.
     """
-    resp = requests.get(datalink_url, timeout=60)
-    resp.raise_for_status()
+    last_err = None
+    for attempt in range(3):
+        try:
+            resp = HTTP_SESSION.get(datalink_url, timeout=45)
+            if resp.status_code == 200:
+                votable = parse_votable(io.BytesIO(resp.content))
+                results_table = None
+                for resource in votable.resources:
+                    if resource.type == "results" and resource.tables:
+                        results_table = resource.tables[0].to_table()
+                        break
+                if results_table is None:
+                    results_table = votable.get_first_table().to_table()
 
-    votable = parse_votable(io.BytesIO(resp.content))
+                sem_col = "semantics" if "semantics" in results_table.colnames else "col_4"
+                url_col = "access_url" if "access_url" in results_table.colnames else "col_1"
+                path_col = "path" if "path" in results_table.colnames else "col_12"
 
-    # The results table is in the second resource (type="results")
-    results_table = None
-    for resource in votable.resources:
-        if resource.type == "results" and resource.tables:
-            results_table = resource.tables[0].to_table()
-            break
-    if results_table is None:
-        results_table = votable.get_first_table().to_table()
+                # Prefer the cutout service URL (much smaller download)
+                cutout_mask = results_table[sem_col] == "#cutout"
+                if cutout_mask.any():
+                    path = str(results_table[path_col][cutout_mask][0])
+                    cutout_base = "https://irsa.ipac.caltech.edu/ibe/cutout"
+                    return f"{cutout_base}?path={path}&ra={ra}&dec={dec}&size={size}"
 
-    sem_col = "semantics" if "semantics" in results_table.colnames else "col_4"
-    url_col = "access_url" if "access_url" in results_table.colnames else "col_1"
-    path_col = "path" if "path" in results_table.colnames else "col_12"
+                # Fallback: full science image direct URL
+                this_mask = results_table[sem_col] == "#this"
+                if this_mask.any():
+                    return str(results_table[url_col][this_mask][0])
 
-    # Prefer the cutout service URL (much smaller download than 65MB full frame)
-    cutout_mask = results_table[sem_col] == "#cutout"
-    if cutout_mask.any():
-        path = str(results_table[path_col][cutout_mask][0])
-        cutout_base = "https://irsa.ipac.caltech.edu/ibe/cutout"
-        cutout_url = (
-            f"{cutout_base}?path={path}"
-            f"&ra={ra}&dec={dec}&size={size}"
-        )
-        return cutout_url
+                raise ValueError("No #cutout or #this entry found in DataLink response.")
+            else:
+                last_err = f"DataLink HTTP {resp.status_code}: {resp.text[:200]}"
+        except Exception as e:
+            last_err = str(e)
+            time.sleep(1.0 * (attempt + 1))
 
-    # Fallback: use the #this row (full science image direct URL)
-    this_mask = results_table[sem_col] == "#this"
-    if this_mask.any():
-        direct_url = str(results_table[url_col][this_mask][0])
-        return direct_url
-
-    raise ValueError(
-        f"Could not resolve DataLink URL to a FITS download: {datalink_url}"
-    )
+    raise RuntimeError(f"Failed to resolve DataLink URL after 3 attempts: {last_err}")
 
 
 # ---------------------------------------------------------------------------
 # 2. Load & clean a single SPHEREx cutout
 # ---------------------------------------------------------------------------
 
-def load_and_clean_cutout(fits_url):
+def download_fits_to_cache(url, timeout=60):
+    """
+    Download a remote FITS file to local disk cache using robust retries.
+    Avoids astropy internal urllib errors and accelerates repeated accesses.
+    """
+    url_hash = hashlib.sha256(url.encode("utf-8")).hexdigest()[:20]
+    cached_path = CACHE_DIR / f"cutout_{url_hash}.fits"
+
+    if cached_path.exists() and cached_path.stat().st_size > 1000:
+        return cached_path
+
+    last_exc = None
+    for attempt in range(3):
+        try:
+            resp = HTTP_SESSION.get(url, timeout=timeout, stream=True)
+            if resp.status_code == 200:
+                tmp_path = CACHE_DIR / f"tmp_{url_hash}_{attempt}.fits"
+                with open(tmp_path, "wb") as f:
+                    for chunk in resp.iter_content(chunk_size=65536):
+                        if chunk:
+                            f.write(chunk)
+                tmp_path.replace(cached_path)
+                return cached_path
+            else:
+                last_exc = f"HTTP {resp.status_code}: {resp.text[:200]}"
+        except Exception as exc:
+            last_exc = str(exc)
+            time.sleep(1.0 * (attempt + 1))
+
+    raise RuntimeError(f"Could not download FITS from {url}: {last_exc}")
+
+
+def load_and_clean_cutout(fits_url_or_path):
     """
     Download a SPHEREx MEF cutout/image, subtract the zodiacal background,
     and mask bad glitch pixels.
@@ -153,7 +217,7 @@ def load_and_clean_cutout(fits_url):
 
     Parameters
     ----------
-    fits_url : str
+    fits_url_or_path : str
         Direct URL or local filepath to the FITS file.
 
     Returns
@@ -165,7 +229,12 @@ def load_and_clean_cutout(fits_url):
     header : astropy.io.fits.Header
         The IMAGE extension header.
     """
-    with fits.open(fits_url, memmap=False) as hdulist:
+    if str(fits_url_or_path).startswith("http://") or str(fits_url_or_path).startswith("https://"):
+        local_path = download_fits_to_cache(str(fits_url_or_path))
+    else:
+        local_path = Path(fits_url_or_path)
+
+    with fits.open(str(local_path), memmap=False) as hdulist:
         image_data = hdulist["IMAGE"].data.astype(np.float64)
         image_header = hdulist["IMAGE"].header
 
@@ -236,24 +305,7 @@ def subtract_epochs(url_epoch1, url_epoch2):
 def detect_anomalies(difference, wcs, sigma_thresh=3.0):
     """
     Detect high-SNR positive and negative peaks (dipoles) in the difference array.
-
-    Parameters
-    ----------
-    difference : 2D numpy.ndarray
-        The subtracted array (epoch2_aligned - epoch1).
-    wcs : astropy.wcs.WCS
-        2D celestial WCS for converting pixel coords to sky (RA, Dec).
-    sigma_thresh : float
-        Statistical significance cutoff in standard deviations.
-
-    Returns
-    -------
-    anomalies : list of dict
-        Detected candidates sorted by absolute SNR descending.
-    stats : dict
-        Sigma-clipped mean, median, and std of the difference array.
     """
-    # Filter out NaNs for robust statistics
     valid_mask = np.isfinite(difference)
     if not np.any(valid_mask):
         return [], {"mean": 0.0, "median": 0.0, "std": 1.0}
@@ -264,8 +316,6 @@ def detect_anomalies(difference, wcs, sigma_thresh=3.0):
 
     snr_array = (difference - median) / std
 
-    # Local maximum filter for positive peaks
-    # Replace NaNs with -inf for max filter and +inf for min filter
     diff_filled_pos = np.where(valid_mask, difference, -np.inf)
     diff_filled_neg = np.where(valid_mask, difference, np.inf)
 
@@ -329,9 +379,6 @@ def _fig_to_base64(fig, dpi=150):
 
 
 def render_single_panel(data, wcs, title, cmap="viridis", symmetric=False, label="MJy/sr", anomalies=None):
-    """
-    Render a single astronomical panel with celestial WCS axes and dark styling.
-    """
     fig = plt.figure(figsize=(7, 6), facecolor="#090d16")
     ax = fig.add_subplot(1, 1, 1, projection=wcs, facecolor="#040711")
 
@@ -351,9 +398,8 @@ def render_single_panel(data, wcs, title, cmap="viridis", symmetric=False, label
 
     im = ax.imshow(data, origin="lower", cmap=cmap, norm=Normalize(vmin=vmin, vmax=vmax))
 
-    # Mark anomalies if requested
     if anomalies:
-        for anom in anomalies[:10]:  # Top 10
+        for anom in anomalies[:10]:
             x, y = anom["pixel_x"], anom["pixel_y"]
             color = "#00f0ff" if "Positive" in anom["type"] else "#ff2a6d"
             circ = Circle((x, y), radius=0.8, fill=False, edgecolor=color, linewidth=1.8, linestyle="--")
@@ -374,9 +420,6 @@ def render_single_panel(data, wcs, title, cmap="viridis", symmetric=False, label
 
 
 def render_combined_panel(epoch1, epoch2_aligned, difference, wcs1, title="SPHEREx Epoch Subtraction", anomalies=None):
-    """
-    Render a 3-panel comparison figure (Epoch 1, Epoch 2 Aligned, Difference) with WCS.
-    """
     fig = plt.figure(figsize=(19, 6.2), facecolor="#090d16")
 
     # Panel 1: Epoch 1
@@ -414,7 +457,6 @@ def render_combined_panel(epoch1, epoch2_aligned, difference, wcs1, title="SPHER
     cbar3.ax.tick_params(colors="#94a3b8", labelsize=8)
     cbar3.set_label("ΔMJy/sr", color="#cbd5e1", fontsize=9)
 
-    # Annotate anomalies on difference panel
     if anomalies:
         for anom in anomalies[:8]:
             x, y = anom["pixel_x"], anom["pixel_y"]
@@ -435,9 +477,6 @@ def render_combined_panel(epoch1, epoch2_aligned, difference, wcs1, title="SPHER
 
 
 def render_images_base64(epoch1, epoch2_aligned, difference, wcs1, anomalies=None):
-    """
-    Generate base64 PNG data URLs for all views.
-    """
     epoch1_png = render_single_panel(epoch1, wcs1, "Epoch 1 (Baseline)", cmap="viridis", label="MJy/sr")
     epoch2_png = render_single_panel(epoch2_aligned, wcs1, "Epoch 2 (Aligned)", cmap="viridis", label="MJy/sr")
     difference_png = render_single_panel(

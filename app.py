@@ -5,6 +5,8 @@ app.py — FastAPI Backend for SPHEREx Epoch Subtraction & Anomaly Discovery
 import os
 os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
 
+import sys
+import traceback
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 
@@ -30,7 +32,7 @@ INDEX_FILE = STATIC_DIR / "index.html"
 app = FastAPI(
     title="SPHEREx Epoch Subtraction & Anomaly Discovery Engine",
     description="Full-stack astronomical image subtraction, WCS reprojection, and moving/variable source detection.",
-    version="1.0.0",
+    version="1.0.1",
 )
 
 # Enable CORS
@@ -107,8 +109,7 @@ PRESET_TARGETS = [
 ]
 
 
-# In-memory observation cache for fast reuse
-# Key: (round(ra, 4), round(dec, 4), round(size, 4), bandpass)
+# In-memory cache for fast reuse across calls
 OBSERVATIONS_CACHE: Dict[tuple, Any] = {}
 CUTOUT_URL_CACHE: Dict[str, str] = {}
 
@@ -190,6 +191,7 @@ async def get_epochs(
             "epochs": epochs
         }
     except Exception as exc:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to query TAP epochs: {str(exc)}")
 
 
@@ -204,7 +206,6 @@ async def run_subtraction(req: SubtractionRequest):
     """
     cache_key = (round(req.ra, 4), round(req.dec, 4), round(req.size, 4), req.bandpass)
     try:
-        # Retrieve or query table
         if cache_key in OBSERVATIONS_CACHE:
             table = OBSERVATIONS_CACHE[cache_key]
         else:
@@ -215,10 +216,10 @@ async def run_subtraction(req: SubtractionRequest):
         if n_epochs < 2:
             raise HTTPException(
                 status_code=400,
-                detail=f"Found only {n_epochs} observation(s) for this position and bandpass. Minimum 2 required."
+                detail=f"Found only {n_epochs} observation(s) for RA={req.ra}, Dec={req.dec}, bandpass={req.bandpass}. Minimum 2 required for temporal subtraction."
             )
 
-        # Normalize indices
+        # Normalize indices safely
         idx1 = req.epoch1_index % n_epochs
         idx2 = req.epoch2_index % n_epochs
 
@@ -228,7 +229,7 @@ async def run_subtraction(req: SubtractionRequest):
         datalink1 = str(row1["access_url"])
         datalink2 = str(row2["access_url"])
 
-        # Resolve DataLinks to direct FITS cutout URLs (cached for speed)
+        # Resolve DataLinks to direct FITS cutout URLs
         dl_key1 = f"{datalink1}_{req.ra}_{req.dec}_{req.size}"
         dl_key2 = f"{datalink2}_{req.ra}_{req.dec}_{req.size}"
 
@@ -291,7 +292,11 @@ async def run_subtraction(req: SubtractionRequest):
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Subtraction pipeline error: {str(exc)}")
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Subtraction error: {type(exc).__name__} - {str(exc)}"
+        )
 
 
 if __name__ == "__main__":

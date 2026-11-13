@@ -600,6 +600,8 @@
       }
 
       btnFetchEpochs.disabled = true;
+      btnRunSubtraction.disabled = true;
+      btnRunSubtraction.classList.add('opacity-50', 'cursor-not-allowed');
       fetchEpochsSpinner.classList.remove('hidden');
       epochStatusText.textContent = 'Querying IRSA TAP...';
       showAlert(`Querying TAP for ${bandpass} observations at (${ra.toFixed(4)}, ${dec.toFixed(4)})...`, 'info');
@@ -624,6 +626,8 @@
         epochStatusText.textContent = 'Query failed';
       } finally {
         btnFetchEpochs.disabled = false;
+        btnRunSubtraction.disabled = false;
+        btnRunSubtraction.classList.remove('opacity-50', 'cursor-not-allowed');
         fetchEpochsSpinner.classList.add('hidden');
       }
     }
@@ -670,6 +674,11 @@
 
       if (isNaN(ra) || isNaN(dec)) {
         showAlert('Please provide valid RA and Dec coordinates.', 'error');
+        return;
+      }
+
+      if (currentEpochs.length >= 2 && epoch1Index === epoch2Index) {
+        showAlert('Epoch 1 and Epoch 2 must be different observation timestamps for temporal subtraction.', 'error');
         return;
       }
 
