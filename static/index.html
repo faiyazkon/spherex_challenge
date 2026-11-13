@@ -3,37 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SPHEREx Temporal Epoch Subtraction & Anomaly Engine</title>
+  <title>SPHEREx Temporal Subtraction & Anomaly Workstation</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['"Geist Mono"', '"JetBrains Mono"', 'Menlo', 'monospace'],
           },
           colors: {
-            space: {
-              950: '#040711',
-              900: '#080d1a',
-              850: '#0d1527',
-              800: '#131e38',
-              700: '#1d2c52',
-            },
-            cyan: {
-              400: '#22d3ee',
-              500: '#06b6d4',
-            },
-            neon: {
-              blue: '#00f0ff',
-              pink: '#ff2a6d',
-              amber: '#fbbf24',
+            zinc: {
+              850: '#151518',
+              900: '#101013',
+              925: '#0c0c0e',
+              950: '#08080a',
             }
           }
         }
@@ -41,435 +31,470 @@
     }
   </script>
   <style>
-    /* Custom glow effects */
-    .glow-cyan {
-      box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.35);
-    }
-    .glow-rose {
-      box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.35);
-    }
-    /* Starfield ambient backdrop */
     body {
-      background-color: #040711;
-      background-image: 
-        radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(1.5px 1.5px at 100px 150px, #38bdf8, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 240px 80px, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 380px 290px, #a855f7, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 520px 200px, #38bdf8, rgba(0,0,0,0)),
-        radial-gradient(1.5px 1.5px at 700px 390px, #ffffff, rgba(0,0,0,0));
-      background-repeat: repeat;
-      background-size: 800px 600px;
+      background-color: #08080a;
+      color: #e4e4e7;
     }
-    /* Custom scrollbars */
+    /* Subtle grid line overlay */
+    .bg-grid {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    }
+    /* Clean custom scrollbar */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
     }
     ::-webkit-scrollbar-track {
-      background: #080d1a;
+      background: #0c0c0e;
     }
     ::-webkit-scrollbar-thumb {
-      background: #1e293b;
-      border-radius: 3px;
+      background: #27272a;
+      border-radius: 2px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #334155;
+      background: #3f3f46;
+    }
+    /* Crosshair overlay in blink comparator */
+    .crosshair-line-h {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1px;
+      background: rgba(245, 158, 11, 0.4);
+      pointer-events: none;
+    }
+    .crosshair-line-v {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+      background: rgba(245, 158, 11, 0.4);
+      pointer-events: none;
     }
   </style>
 </head>
-<body class="text-slate-100 min-h-screen font-sans flex flex-col">
+<body class="min-h-screen flex flex-col font-sans antialiased bg-grid select-none">
 
-  <!-- Top Navigation Header -->
-  <header class="border-b border-space-700/60 bg-space-950/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
-          </svg>
+  <!-- Top Global Navigation -->
+  <header class="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      
+      <!-- Brand & Mission Info -->
+      <div class="flex items-center space-x-3.5">
+        <div class="w-7 h-7 rounded border border-zinc-700 bg-zinc-900 flex items-center justify-center font-mono font-bold text-xs text-amber-500">
+          SPX
         </div>
-        <div>
-          <div class="flex items-center space-x-2">
-            <span class="text-lg font-bold tracking-tight text-white">SPHEREx</span>
-            <span class="text-xs uppercase tracking-wider font-mono px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 font-semibold">Discovery Engine</span>
-          </div>
-          <p class="text-xs text-slate-400">Temporal Epoch Subtraction & Anomaly Pipeline</p>
+        <div class="flex items-center space-x-2.5">
+          <span class="text-sm font-semibold tracking-tight text-zinc-100">SPHEREx</span>
+          <span class="text-zinc-600">/</span>
+          <span class="text-xs font-mono text-zinc-400">Temporal Subtraction & Anomaly Engine</span>
         </div>
       </div>
 
-      <div class="flex items-center space-x-4 text-xs font-mono">
-        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-space-900 border border-space-700/80 text-slate-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>IRSA TAP: Connected</span>
+      <!-- Telemetry Pills -->
+      <div class="flex items-center space-x-3 text-xs font-mono">
+        <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-zinc-800 bg-zinc-900/80 text-zinc-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span class="text-zinc-400">IRSA TAP:</span>
+          <span class="text-zinc-200">Online</span>
         </div>
-        <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-space-900 border border-space-700/80 text-slate-300">
-          <span class="text-cyan-400 font-semibold">WCS Interp</span>
-          <span class="text-slate-500">|</span>
-          <span class="text-indigo-400 font-semibold">Flags Bitmasking</span>
+        <div class="hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded border border-zinc-800 bg-zinc-900/80 text-zinc-400">
+          <span>DR1 Level-2</span>
+          <span class="text-zinc-600">•</span>
+          <span>WCS Interpolation</span>
         </div>
+        <a href="https://github.com/faiyazkon/spherex_challenge" target="_blank" class="text-zinc-400 hover:text-zinc-200 transition px-2 py-1">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        </a>
       </div>
+
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6 w-full">
-
-    <!-- Top Target Selection & Control Card -->
-    <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-5 shadow-2xl relative overflow-hidden backdrop-blur-sm">
-      <div class="absolute -top-24 -right-24 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        
-        <!-- Left: Presets & Target Config -->
-        <div class="lg:col-span-8 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-space-700/60 pb-3">
-            <div class="flex items-center space-x-2">
-              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-              <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Science Target Configuration</h2>
-            </div>
-            <!-- Preset selector dropdown -->
-            <div class="flex items-center space-x-2">
-              <label for="presetSelect" class="text-xs text-slate-400 font-medium">Quick Preset:</label>
-              <select id="presetSelect" class="bg-space-800 border border-space-700 text-cyan-300 text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-cyan-500 focus:outline-none">
-                <option value="">-- Choose NASA Test Target --</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <!-- RA Input -->
-            <div>
-              <label class="block text-xs font-mono text-slate-400 mb-1">RA (deg, ICRS)</label>
-              <input type="number" step="any" id="inputRA" value="133.795129" 
-                class="w-full bg-space-850 border border-space-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none">
-            </div>
-
-            <!-- Dec Input -->
-            <div>
-              <label class="block text-xs font-mono text-slate-400 mb-1">Dec (deg, ICRS)</label>
-              <input type="number" step="any" id="inputDec" value="-7.245147" 
-                class="w-full bg-space-850 border border-space-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none">
-            </div>
-
-            <!-- Cutout Size -->
-            <div>
-              <label class="block text-xs font-mono text-slate-400 mb-1">Size (deg)</label>
-              <input type="number" step="0.01" min="0.01" max="0.5" id="inputSize" value="0.05" 
-                class="w-full bg-space-850 border border-space-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none">
-            </div>
-
-            <!-- Bandpass Selector -->
-            <div>
-              <label class="block text-xs font-mono text-slate-400 mb-1">Bandpass</label>
-              <select id="selectBandpass" 
-                class="w-full bg-space-850 border border-space-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none">
-                <option value="SPHEREx-D1">SPHEREx-D1 (0.75-1.11 μm)</option>
-                <option value="SPHEREx-D2" selected>SPHEREx-D2 (1.11-1.64 μm)</option>
-                <option value="SPHEREx-D3">SPHEREx-D3 (1.64-2.42 μm)</option>
-                <option value="SPHEREx-D4">SPHEREx-D4 (2.42-3.82 μm)</option>
-                <option value="SPHEREx-D5">SPHEREx-D5 (3.82-4.42 μm)</option>
-                <option value="SPHEREx-D6">SPHEREx-D6 (4.42-5.00 μm)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Target Description Pill -->
-          <div id="targetDescriptionBox" class="p-2.5 rounded-lg bg-space-850/80 border border-space-700/60 text-xs text-slate-300 flex items-start space-x-2">
-            <span class="text-cyan-400 text-sm">ℹ️</span>
-            <div>
-              <span id="targetNameBadge" class="font-bold text-white mr-1.5">WISE 0855−0714</span>
-              <span id="targetDescText" class="text-slate-400">Coldest known brown dwarf (~250 K) with large proper motion (~8.1 arcsec/yr), creating textbook dipole signatures.</span>
-            </div>
-          </div>
+  <!-- Workspace Shell -->
+  <div class="flex-1 flex flex-col lg:flex-row max-w-[1720px] w-full mx-auto p-4 sm:p-5 gap-5">
+    
+    <!-- LEFT RAIL: Precision Control Console (340px) -->
+    <aside class="w-full lg:w-[350px] shrink-0 space-y-4">
+      
+      <!-- Target Configuration Box -->
+      <div class="rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 space-y-3.5">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-2.5">
+          <span class="text-xs font-semibold text-zinc-200 tracking-wide">Target Parameters</span>
+          <span class="text-[10px] font-mono text-zinc-500 uppercase">Aperture Setup</span>
         </div>
 
-        <!-- Right: Epoch Picker & Action Trigger -->
-        <div class="lg:col-span-4 bg-space-850/90 border border-space-700/80 rounded-xl p-4 space-y-3.5 flex flex-col justify-between h-full">
+        <!-- Preset Target Selector -->
+        <div>
+          <label class="block text-[11px] font-mono text-zinc-400 mb-1">NASA Science Target Preset</label>
+          <select id="presetSelect" class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 font-medium focus:border-zinc-600 focus:outline-none transition">
+            <option value="">Custom Coordinates</option>
+          </select>
+        </div>
+
+        <!-- Coordinates Inputs (RA / Dec) -->
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Temporal Epochs</span>
-              <button id="btnFetchEpochs" class="text-xs px-2.5 py-1 rounded bg-space-700 hover:bg-space-600 text-cyan-300 font-medium transition flex items-center space-x-1">
-                <span id="fetchEpochsSpinner" class="hidden animate-spin">⏳</span>
-                <span>Query Available Epochs</span>
-              </button>
-            </div>
-
-            <!-- Epoch Count Badge -->
-            <div class="text-[11px] font-mono text-slate-400 mb-2 flex items-center justify-between">
-              <span id="epochStatusText">Ready to query TAP</span>
-              <span id="epochCountBadge" class="px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-700 font-semibold">0 Epochs</span>
-            </div>
-
-            <div class="space-y-2">
-              <!-- Epoch 1 Dropdown -->
-              <div>
-                <label class="block text-[11px] font-mono text-cyan-400 mb-0.5 font-semibold">Epoch 1 (Baseline / Reference):</label>
-                <select id="selectEpoch1" class="w-full bg-space-900 border border-space-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono">
-                  <option value="0">Default: Oldest Available Epoch</option>
-                </select>
-              </div>
-
-              <!-- Epoch 2 Dropdown -->
-              <div>
-                <label class="block text-[11px] font-mono text-indigo-400 mb-0.5 font-semibold">Epoch 2 (Follow-up / Target):</label>
-                <select id="selectEpoch2" class="w-full bg-space-900 border border-space-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono">
-                  <option value="-1">Default: Newest Available Epoch</option>
-                </select>
-              </div>
-            </div>
+            <label class="block text-[10px] font-mono text-zinc-400 mb-1">Right Ascension (deg)</label>
+            <input type="number" step="any" id="inputRA" value="133.795129" 
+              class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-100 focus:border-zinc-600 focus:outline-none">
           </div>
-
-          <!-- Run Subtraction Button -->
-          <div class="pt-2">
-            <button id="btnRunSubtraction" 
-              class="w-full py-3 px-4 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white shadow-lg shadow-cyan-500/25 transition duration-200 flex items-center justify-center space-x-2">
-              <span id="runSpinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-              <span id="runButtonText">🚀 Run Subtraction Pipeline</span>
-            </button>
+          <div>
+            <label class="block text-[10px] font-mono text-zinc-400 mb-1">Declination (deg)</label>
+            <input type="number" step="any" id="inputDec" value="-7.245147" 
+              class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-100 focus:border-zinc-600 focus:outline-none">
           </div>
         </div>
 
-      </div>
-    </div>
-
-    <!-- Live Status / Message Toast -->
-    <div id="statusAlert" class="hidden p-3.5 rounded-xl border text-xs flex items-center justify-between font-mono">
-      <div class="flex items-center space-x-2">
-        <span id="statusIcon">⚡</span>
-        <span id="statusMessage">Processing request...</span>
-      </div>
-      <button onclick="document.getElementById('statusAlert').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
-    </div>
-
-    <!-- Subtraction Results Section -->
-    <div id="resultsSection" class="hidden space-y-6">
-
-      <!-- Stats Metric Bar -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="bg-space-900/90 border border-space-700/80 rounded-xl p-3.5 backdrop-blur-sm">
-          <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Temporal Baseline (Δt)</div>
-          <div class="text-xl font-bold font-mono text-cyan-400 mt-1" id="statDeltaDays">-- days</div>
-          <div class="text-[10px] text-slate-500 mt-0.5" id="statEpochDates">Epoch 1 vs Epoch 2</div>
+        <!-- Cutout Size & Bandpass -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[10px] font-mono text-zinc-400 mb-1">FOV Radius (deg)</label>
+            <input type="number" step="0.01" min="0.01" max="0.5" id="inputSize" value="0.05" 
+              class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-100 focus:border-zinc-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-mono text-zinc-400 mb-1">Spectral Bandpass</label>
+            <select id="selectBandpass" 
+              class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-200 focus:border-zinc-600 focus:outline-none">
+              <option value="SPHEREx-D1">D1 (0.75-1.11 μm)</option>
+              <option value="SPHEREx-D2" selected>D2 (1.11-1.64 μm)</option>
+              <option value="SPHEREx-D3">D3 (1.64-2.42 μm)</option>
+              <option value="SPHEREx-D4">D4 (2.42-3.82 μm)</option>
+              <option value="SPHEREx-D5">D5 (3.82-4.42 μm)</option>
+              <option value="SPHEREx-D6">D6 (4.42-5.00 μm)</option>
+            </select>
+          </div>
         </div>
-        <div class="bg-space-900/90 border border-space-700/80 rounded-xl p-3.5 backdrop-blur-sm">
-          <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Detected Anomalies</div>
-          <div class="text-xl font-bold font-mono text-neon-pink mt-1" id="statAnomaliesCount">0 Peaks</div>
-          <div class="text-[10px] text-slate-500 mt-0.5">Statistical dipoles > 3.0σ</div>
-        </div>
-        <div class="bg-space-900/90 border border-space-700/80 rounded-xl p-3.5 backdrop-blur-sm">
-          <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Background Std (σ)</div>
-          <div class="text-xl font-bold font-mono text-amber-400 mt-1" id="statStd">-- MJy/sr</div>
-          <div class="text-[10px] text-slate-500 mt-0.5">Sigma-clipped noise level</div>
-        </div>
-        <div class="bg-space-900/90 border border-space-700/80 rounded-xl p-3.5 backdrop-blur-sm">
-          <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Cutout Array Grid</div>
-          <div class="text-xl font-bold font-mono text-emerald-400 mt-1" id="statGridShape">-- × -- px</div>
-          <div class="text-[10px] text-slate-500 mt-0.5">Reprojected WCS grid</div>
+
+        <!-- Target Description Note -->
+        <div class="p-2.5 rounded bg-zinc-925 border border-zinc-800/80 text-[11px] space-y-1">
+          <div class="flex items-center justify-between">
+            <span id="targetNameBadge" class="font-semibold text-zinc-200">WISE 0855−0714</span>
+            <span class="text-[10px] font-mono text-amber-500/90">Proper Motion</span>
+          </div>
+          <p id="targetDescText" class="text-zinc-400 text-[10.5px] leading-relaxed">
+            Coldest known brown dwarf (~250 K) with large proper motion (~8.1 arcsec/yr), creating textbook dipole signatures.
+          </p>
         </div>
       </div>
 
-      <!-- 3-Panel Inspection Layout -->
-      <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-5 shadow-2xl backdrop-blur-sm space-y-4">
-        <div class="flex items-center justify-between border-b border-space-700/60 pb-3">
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
-            <h3 class="text-sm font-bold uppercase tracking-wider text-white">Three-Panel WCS Astronomical Inspection</h3>
+      <!-- Temporal Epochs Selection Box -->
+      <div class="rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 space-y-3.5">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-2.5">
+          <span class="text-xs font-semibold text-zinc-200 tracking-wide">Temporal Epochs</span>
+          <button id="btnFetchEpochs" class="text-[11px] font-mono px-2 py-0.5 rounded border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition flex items-center space-x-1">
+            <span id="fetchEpochsSpinner" class="hidden">
+              <svg class="animate-spin w-3 h-3 text-zinc-300" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            </span>
+            <span>Query Archive</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] font-mono">
+          <span id="epochStatusText" class="text-zinc-400">Archive ready</span>
+          <span id="epochCountBadge" class="text-zinc-300 font-semibold">0 Epochs</span>
+        </div>
+
+        <div class="space-y-2.5">
+          <!-- Epoch 1 Dropdown -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[10px] font-mono text-zinc-400 uppercase">Epoch 1 (Baseline Reference)</label>
+              <span class="text-[9px] font-mono text-zinc-500">Oldest Default</span>
+            </div>
+            <select id="selectEpoch1" class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-200 focus:border-zinc-600 focus:outline-none">
+              <option value="0">Default: Oldest Available Epoch</option>
+            </select>
           </div>
-          <div class="flex items-center space-x-2 text-xs">
-            <button id="btnToggleCombinedModal" class="px-3 py-1 rounded-lg bg-space-800 hover:bg-space-700 text-cyan-300 border border-space-700 font-medium transition">
-              🔍 Open Combined 3-Panel Plot
-            </button>
+
+          <!-- Epoch 2 Dropdown -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[10px] font-mono text-zinc-400 uppercase">Epoch 2 (Follow-up Observation)</label>
+              <span class="text-[9px] font-mono text-zinc-500">Newest Default</span>
+            </div>
+            <select id="selectEpoch2" class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-200 focus:border-zinc-600 focus:outline-none">
+              <option value="-1">Default: Newest Available Epoch</option>
+            </select>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Panel 1: Epoch 1 -->
-          <div class="bg-space-950 border border-space-700/60 rounded-xl p-3 flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-cyan-300 font-mono">Epoch 1 (Baseline)</span>
-              <span id="panelEpoch1Date" class="text-[10px] px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 font-mono">--</span>
-            </div>
-            <div class="relative rounded-lg overflow-hidden border border-space-800 aspect-square flex items-center justify-center bg-black">
-              <img id="imgEpoch1" src="" alt="Epoch 1" class="w-full h-full object-contain">
-            </div>
-            <div class="text-[10px] font-mono text-slate-400 mt-2 text-center">Calibrated & ZODI-Subtracted</div>
+        <!-- Detection Cutoff Threshold -->
+        <div class="pt-1">
+          <div class="flex items-center justify-between text-[10px] font-mono mb-1">
+            <span class="text-zinc-400 uppercase">Detection Cutoff (SNR σ)</span>
+            <span id="snrCutoffLabel" class="text-zinc-200 font-semibold">3.0 σ</span>
           </div>
-
-          <!-- Panel 2: Epoch 2 -->
-          <div class="bg-space-950 border border-space-700/60 rounded-xl p-3 flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-cyan-300 font-mono">Epoch 2 (Aligned)</span>
-              <span id="panelEpoch2Date" class="text-[10px] px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-400 border border-indigo-800/60 font-mono">--</span>
-            </div>
-            <div class="relative rounded-lg overflow-hidden border border-space-800 aspect-square flex items-center justify-center bg-black">
-              <img id="imgEpoch2" src="" alt="Epoch 2" class="w-full h-full object-contain">
-            </div>
-            <div class="text-[10px] font-mono text-slate-400 mt-2 text-center">Reprojected to Epoch 1 WCS</div>
-          </div>
-
-          <!-- Panel 3: Difference -->
-          <div class="bg-space-950 border border-space-700/60 rounded-xl p-3 flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-neon-pink font-mono">Difference (Epoch 2 − Epoch 1)</span>
-              <span class="text-[10px] px-2 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-800/60 font-mono">RdBu_r Dipoles</span>
-            </div>
-            <div class="relative rounded-lg overflow-hidden border border-space-800 aspect-square flex items-center justify-center bg-black">
-              <img id="imgDifference" src="" alt="Difference Map" class="w-full h-full object-contain">
-            </div>
-            <div class="text-[10px] font-mono text-slate-400 mt-2 text-center">Positive (Cyan) / Negative (Rose) Dipoles</div>
-          </div>
+          <input type="range" id="inputSigma" min="2.0" max="8.0" step="0.5" value="3.0" 
+            class="w-full accent-amber-500 cursor-pointer h-1.5 bg-zinc-800 rounded-lg">
         </div>
       </div>
 
-      <!-- Interactive Blink Comparator Section -->
-      <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-5 shadow-2xl backdrop-blur-sm space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-space-700/60 pb-3">
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
-            <h3 class="text-sm font-bold uppercase tracking-wider text-white">Interactive Blink Comparator</h3>
-            <span class="text-xs font-mono text-slate-400 hidden sm:inline">(Watch proper motion & variable flux in real-time)</span>
-          </div>
+      <!-- Action Button -->
+      <div>
+        <button id="btnRunSubtraction" 
+          class="w-full py-2.5 px-4 rounded-md font-medium text-xs font-mono tracking-wide bg-zinc-100 hover:bg-white text-zinc-950 transition duration-150 flex items-center justify-center space-x-2 border border-zinc-200 shadow-sm">
+          <span id="runSpinner" class="hidden">
+            <svg class="animate-spin w-3.5 h-3.5 text-zinc-950" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          </span>
+          <span id="runButtonText">Execute Subtraction Pipeline</span>
+        </button>
+      </div>
 
-          <!-- Blink Player Controls -->
-          <div class="flex items-center space-x-3">
-            <button id="btnBlinkToggle" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold shadow transition flex items-center space-x-1.5">
-              <span id="blinkPlayIcon">⏸️</span>
-              <span id="blinkPlayText">Pause Blink</span>
-            </button>
-            <button id="btnBlinkStep" class="px-3 py-1.5 rounded-lg bg-space-800 hover:bg-space-700 text-slate-300 font-mono text-xs border border-space-700 transition">
-              Next Frame ⏩
-            </button>
-          </div>
+      <!-- Toast Alert Box -->
+      <div id="statusAlert" class="hidden p-3 rounded border text-xs font-mono flex items-start justify-between">
+        <div class="flex items-start space-x-2">
+          <span id="statusMessage">Processing pipeline...</span>
+        </div>
+        <button onclick="document.getElementById('statusAlert').classList.add('hidden')" class="text-zinc-400 hover:text-zinc-100">&times;</button>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT CANVAS: Scientific Workspace (flex-1) -->
+    <main class="flex-1 flex flex-col space-y-4 min-w-0">
+      
+      <!-- Top Workspace Toolbar -->
+      <div class="rounded-lg border border-zinc-800 bg-zinc-900/90 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        
+        <!-- View Mode Segmented Switcher -->
+        <div class="flex items-center space-x-1 p-0.5 rounded border border-zinc-800 bg-zinc-925 text-xs font-mono">
+          <button id="tab3Panel" class="px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition">
+            3-Panel Array
+          </button>
+          <button id="tabBlink" class="px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition">
+            Blink Comparator
+          </button>
+          <button id="tabDifference" class="px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition">
+            Difference Map
+          </button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+        <!-- Metric Summary Chips -->
+        <div class="flex items-center space-x-3 text-xs font-mono">
+          <div class="flex items-center space-x-1.5 text-zinc-400">
+            <span>Δt:</span>
+            <span id="statDeltaDays" class="text-zinc-200 font-semibold">-- d</span>
+          </div>
+          <span class="text-zinc-700">|</span>
+          <div class="flex items-center space-x-1.5 text-zinc-400">
+            <span>Noise σ:</span>
+            <span id="statStd" class="text-zinc-200 font-semibold">--</span>
+          </div>
+          <span class="text-zinc-700">|</span>
+          <div class="flex items-center space-x-1.5 text-zinc-400">
+            <span>Grid:</span>
+            <span id="statGridShape" class="text-zinc-200 font-semibold">-- × --</span>
+          </div>
+          <span class="text-zinc-700">|</span>
+          <div class="flex items-center space-x-1.5 text-zinc-400">
+            <span>Anomalies:</span>
+            <span id="statAnomaliesCount" class="text-emerald-400 font-semibold">0</span>
+          </div>
+          <button id="btnOpenModal" class="hidden sm:inline px-2 py-0.5 rounded border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition text-[11px]">
+            Combined Plot ↗
+          </button>
+        </div>
+
+      </div>
+
+      <!-- MAIN VIEWPORT CONTAINER -->
+      <div id="viewportContainer" class="flex-1 rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 min-h-[460px] flex flex-col justify-between">
+        
+        <!-- View 1: 3-Panel Astronomical Array -->
+        <div id="view3Panel" class="grid grid-cols-1 md:grid-cols-3 gap-3.5 flex-1">
           
-          <!-- Large Blink Canvas Container -->
-          <div class="lg:col-span-8 flex flex-col items-center">
-            <div class="relative w-full max-w-lg aspect-square bg-black rounded-xl overflow-hidden border border-space-700/80 shadow-2xl flex items-center justify-center">
-              
-              <!-- Frame 1 Image -->
-              <img id="blinkImg1" src="" alt="Blink Frame 1" class="absolute inset-0 w-full h-full object-contain transition-opacity duration-100 opacity-100">
-              
-              <!-- Frame 2 Image -->
-              <img id="blinkImg2" src="" alt="Blink Frame 2" class="absolute inset-0 w-full h-full object-contain transition-opacity duration-100 opacity-0">
+          <!-- Epoch 1 Panel -->
+          <div class="flex flex-col rounded border border-zinc-800 bg-zinc-950 p-3">
+            <div class="flex items-center justify-between text-xs font-mono mb-2">
+              <span class="font-medium text-zinc-300">Epoch 1 (Baseline)</span>
+              <span id="panelEpoch1Date" class="text-[10px] text-zinc-500">--</span>
+            </div>
+            <div class="flex-1 flex items-center justify-center bg-black rounded border border-zinc-850 overflow-hidden min-h-[260px]">
+              <img id="imgEpoch1" src="" alt="Epoch 1" class="max-w-full max-h-full object-contain hidden">
+              <span id="placeholderEpoch1" class="text-xs font-mono text-zinc-600">Awaiting Subtraction Run</span>
+            </div>
+            <div class="text-[10px] font-mono text-zinc-500 mt-2 text-right">ZODI-Subtracted Flux (MJy/sr)</div>
+          </div>
 
-              <!-- Active Frame Indicator Badge -->
-              <div class="absolute top-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-md bg-space-950/80 border text-xs font-mono font-bold flex items-center space-x-2 shadow-lg" id="blinkBadge">
-                <span class="w-2 h-2 rounded-full bg-cyan-400" id="blinkBadgeDot"></span>
-                <span id="blinkBadgeText" class="text-cyan-300">EPOCH 1 (Baseline)</span>
-              </div>
+          <!-- Epoch 2 Panel -->
+          <div class="flex flex-col rounded border border-zinc-800 bg-zinc-950 p-3">
+            <div class="flex items-center justify-between text-xs font-mono mb-2">
+              <span class="font-medium text-zinc-300">Epoch 2 (WCS Aligned)</span>
+              <span id="panelEpoch2Date" class="text-[10px] text-zinc-500">--</span>
+            </div>
+            <div class="flex-1 flex items-center justify-center bg-black rounded border border-zinc-850 overflow-hidden min-h-[260px]">
+              <img id="imgEpoch2" src="" alt="Epoch 2" class="max-w-full max-h-full object-contain hidden">
+              <span id="placeholderEpoch2" class="text-xs font-mono text-zinc-600">Awaiting Subtraction Run</span>
+            </div>
+            <div class="text-[10px] font-mono text-zinc-500 mt-2 text-right">Reprojected Grid (MJy/sr)</div>
+          </div>
+
+          <!-- Difference Panel -->
+          <div class="flex flex-col rounded border border-zinc-800 bg-zinc-950 p-3">
+            <div class="flex items-center justify-between text-xs font-mono mb-2">
+              <span class="font-medium text-zinc-300">Difference (Epoch 2 − Epoch 1)</span>
+              <span class="text-[10px] font-mono text-zinc-500">RdBu_r Scale</span>
+            </div>
+            <div class="flex-1 flex items-center justify-center bg-black rounded border border-zinc-850 overflow-hidden min-h-[260px]">
+              <img id="imgDifference" src="" alt="Difference Map" class="max-w-full max-h-full object-contain hidden">
+              <span id="placeholderDifference" class="text-xs font-mono text-zinc-600">Awaiting Subtraction Run</span>
+            </div>
+            <div class="text-[10px] font-mono text-zinc-500 mt-2 text-right">Positive (Green) / Negative (Red)</div>
+          </div>
+
+        </div>
+
+        <!-- View 2: High-Precision Blink Comparator (Hidden by default) -->
+        <div id="viewBlink" class="hidden flex-1 flex flex-col md:flex-row gap-4 items-center justify-center">
+          
+          <!-- Blink Canvas Area -->
+          <div class="relative w-full max-w-xl aspect-square bg-black rounded border border-zinc-800 flex items-center justify-center overflow-hidden">
+            <img id="blinkImg1" src="" alt="Frame 1" class="absolute inset-0 w-full h-full object-contain opacity-100 transition-opacity duration-75">
+            <img id="blinkImg2" src="" alt="Frame 2" class="absolute inset-0 w-full h-full object-contain opacity-0 transition-opacity duration-75">
+            
+            <!-- Crosshairs overlay -->
+            <div id="crosshairH" class="crosshair-line-h hidden"></div>
+            <div id="crosshairV" class="crosshair-line-v hidden"></div>
+
+            <!-- Active Frame Pill -->
+            <div class="absolute top-3 left-3 px-2.5 py-1 rounded bg-zinc-950/80 border border-zinc-800 text-[11px] font-mono font-medium flex items-center space-x-2 backdrop-blur">
+              <span id="blinkIndicatorDot" class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+              <span id="blinkIndicatorText" class="text-zinc-200">EPOCH 1 (Baseline)</span>
             </div>
           </div>
 
-          <!-- Blink Settings & Information -->
-          <div class="lg:col-span-4 bg-space-850/80 border border-space-700/70 rounded-xl p-4 space-y-4">
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Blink Interval Rate</label>
-              <div class="flex items-center space-x-3">
-                <input type="range" id="blinkSpeedSlider" min="150" max="1200" step="50" value="450" 
-                  class="w-full accent-cyan-400 cursor-pointer">
-                <span id="blinkSpeedLabel" class="text-xs font-mono font-bold text-cyan-400 w-16 text-right">450 ms</span>
-              </div>
-              <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
-                <span>Fast (150ms)</span>
-                <span>Slow (1200ms)</span>
-              </div>
+          <!-- Blink Control Console -->
+          <div class="w-full md:w-64 space-y-4 p-4 rounded border border-zinc-800 bg-zinc-950 text-xs font-mono">
+            <div class="border-b border-zinc-800 pb-2">
+              <span class="font-semibold text-zinc-200">Comparator Controls</span>
             </div>
 
-            <div class="border-t border-space-700/60 pt-3 space-y-2 text-xs">
-              <div class="text-slate-300 font-semibold">How to spot discoveries:</div>
-              <ul class="space-y-1.5 text-slate-400 text-[11px] list-disc list-inside">
-                <li><strong class="text-cyan-300">Fast Proper Motion:</strong> Look for a source shifting position back-and-forth between epochs (like WISE 0855 or Barnard's Star).</li>
-                <li><strong class="text-amber-300">Variable Stars:</strong> Look for an object staying fixed in place but rhythmically brightening or fading in flux.</li>
-                <li><strong class="text-neon-pink">Transient Outbursts:</strong> Look for an object present in only one epoch.</li>
-              </ul>
-            </div>
-
-            <div class="border-t border-space-700/60 pt-3">
-              <button id="btnSwitchToDiff" class="w-full py-2 px-3 rounded-lg bg-space-800 hover:bg-space-700 border border-space-700 text-xs font-mono text-cyan-300 transition">
-                Show Difference Map in Viewer
+            <!-- Play / Step Controls -->
+            <div class="flex items-center space-x-2">
+              <button id="btnBlinkToggle" class="flex-1 py-1.5 px-3 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium transition flex items-center justify-center space-x-1.5">
+                <span id="blinkIcon">⏸</span>
+                <span id="blinkText">Pause</span>
+              </button>
+              <button id="btnBlinkStep" class="py-1.5 px-3 rounded border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition">
+                Step ⏭
               </button>
             </div>
+
+            <!-- Frame Speed Slider -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-[10px] text-zinc-400">
+                <span>Blink Interval</span>
+                <span id="blinkRateLabel" class="text-zinc-200 font-semibold">400 ms</span>
+              </div>
+              <input type="range" id="blinkSlider" min="100" max="1000" step="50" value="400" 
+                class="w-full accent-amber-500 cursor-pointer h-1.5 bg-zinc-800 rounded">
+            </div>
+
+            <!-- Crosshair Toggle -->
+            <div class="pt-2 border-t border-zinc-800">
+              <label class="flex items-center space-x-2 text-[11px] text-zinc-300 cursor-pointer">
+                <input type="checkbox" id="checkCrosshairs" class="accent-amber-500 rounded">
+                <span>Display Astrometric Reticle</span>
+              </label>
+            </div>
+
+            <!-- Info Guide -->
+            <div class="pt-2 border-t border-zinc-800 text-[10px] text-zinc-500 space-y-1 leading-normal">
+              <div><strong class="text-zinc-300">Moving Source:</strong> Alternate frame shift indicates proper motion displacement.</div>
+              <div><strong class="text-zinc-300">Variable Star:</strong> Static position with pulsating flux intensity.</div>
+            </div>
           </div>
 
         </div>
+
+        <!-- View 3: Single Difference Map View (Hidden by default) -->
+        <div id="viewDifference" class="hidden flex-1 flex items-center justify-center">
+          <div class="w-full max-w-2xl aspect-square bg-black rounded border border-zinc-800 p-2 flex items-center justify-center">
+            <img id="imgDiffLarge" src="" alt="Difference Map" class="max-w-full max-h-full object-contain">
+          </div>
+        </div>
+
       </div>
 
-      <!-- Detected Anomalies Table -->
-      <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-5 shadow-2xl backdrop-blur-sm space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-space-700/60 pb-3">
+      <!-- DISCOVERIES DRAWER / TABLE -->
+      <div class="rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-2.5">
           <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-neon-pink"></span>
-            <h3 class="text-sm font-bold uppercase tracking-wider text-white">Discovered Moving & Variable Anomalies</h3>
-            <span id="tableAnomaliesBadge" class="text-xs font-mono px-2 py-0.5 rounded-full bg-rose-950/80 text-rose-300 border border-rose-800/60">0 candidates</span>
+            <span class="text-xs font-semibold text-zinc-200 tracking-wide">Candidate Discoveries</span>
+            <span id="anomTableBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">0 Candidates</span>
           </div>
 
-          <!-- Table Search / Filter -->
-          <div class="flex items-center space-x-2 text-xs">
-            <input type="text" id="anomSearchInput" placeholder="Filter by type or SNR..." 
-              class="bg-space-800 border border-space-700 rounded-lg px-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono text-xs">
+          <!-- Table Search & Filter -->
+          <div class="flex items-center space-x-2 text-xs font-mono">
+            <input type="text" id="tableFilterInput" placeholder="Filter candidates..." 
+              class="bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-600">
+            <button id="btnExportCSV" class="px-2.5 py-1 rounded border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-xs transition">
+              Export CSV
+            </button>
           </div>
         </div>
 
-        <!-- Table Container -->
-        <div class="overflow-x-auto rounded-xl border border-space-700/70">
+        <!-- Dense Data Table -->
+        <div class="overflow-x-auto rounded border border-zinc-800">
           <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-space-850/90 text-slate-400 border-b border-space-700/70">
+            <thead class="bg-zinc-925 text-zinc-400 border-b border-zinc-800 text-[11px]">
               <tr>
-                <th class="py-3 px-3.5"># Rank</th>
-                <th class="py-3 px-3.5">Dipole Status / Classification</th>
-                <th class="py-3 px-3.5">Significance (SNR)</th>
-                <th class="py-3 px-3.5">Flux Difference (ΔMJy/sr)</th>
-                <th class="py-3 px-3.5">RA (deg, ICRS)</th>
-                <th class="py-3 px-3.5">Dec (deg, ICRS)</th>
-                <th class="py-3 px-3.5">Pixel Grid (X, Y)</th>
+                <th class="py-2.5 px-3">#</th>
+                <th class="py-2.5 px-3">Type</th>
+                <th class="py-2.5 px-3">Significance (SNR)</th>
+                <th class="py-2.5 px-3">Δ Flux (MJy/sr)</th>
+                <th class="py-2.5 px-3">RA (ICRS)</th>
+                <th class="py-2.5 px-3">Dec (ICRS)</th>
+                <th class="py-2.5 px-3">Pixel (X, Y)</th>
               </tr>
             </thead>
-            <tbody id="anomaliesTableBody" class="divide-y divide-space-800 bg-space-950/60">
+            <tbody id="anomaliesTbody" class="divide-y divide-zinc-850 bg-zinc-950/70 text-zinc-300">
               <tr>
-                <td colspan="7" class="py-8 text-center text-slate-500">No subtraction run yet. Click "Run Subtraction Pipeline" above.</td>
+                <td colspan="7" class="py-6 text-center text-zinc-600 font-mono text-xs">
+                  Run subtraction pipeline to populate candidates table.
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-    </div>
+    </main>
 
-  </main>
+  </div>
 
-  <!-- Combined 3-Panel Modal -->
-  <div id="combinedModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-    <div class="bg-space-900 border border-space-700 rounded-2xl max-w-6xl w-full p-5 space-y-3 relative shadow-2xl">
-      <div class="flex items-center justify-between border-b border-space-700 pb-2">
-        <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">Combined High-Resolution Subtraction Plot</h3>
-        <button id="btnCloseModal" class="text-slate-400 hover:text-white text-xl font-bold px-2 py-1">&times;</button>
+  <!-- Combined High-Resolution Modal -->
+  <div id="modalCombined" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-lg max-w-6xl w-full p-4 space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-2 text-xs font-mono">
+        <span class="font-semibold text-zinc-200">Combined 3-Panel Inspection Figure</span>
+        <button id="btnCloseModal" class="text-zinc-400 hover:text-zinc-100 text-base">&times;</button>
       </div>
-      <div class="max-h-[80vh] overflow-auto flex items-center justify-center bg-black rounded-lg p-2 border border-space-800">
-        <img id="imgCombinedModal" src="" alt="Combined High-Res Plot" class="max-w-full h-auto rounded">
+      <div class="flex items-center justify-center bg-black rounded border border-zinc-850 p-2 max-h-[82vh] overflow-auto">
+        <img id="imgModalCombined" src="" alt="Combined Figure" class="max-w-full h-auto">
       </div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="border-t border-space-700/50 bg-space-950/80 py-4 text-center text-xs text-slate-500 font-mono mt-auto">
-    SPHEREx Spectral Imaging Pipeline &bull; Automated WCS Reprojection &bull; Zodiacal Subtraction &bull; NASA IRSA TAP
-  </footer>
-
-  <!-- Vanilla JavaScript Logic -->
+  <!-- Client-Side Architecture -->
   <script>
     // State
     let presets = [];
     let currentEpochs = [];
-    let subtractionResult = null;
-    let blinkIntervalId = null;
-    let blinkCurrentFrame = 1; // 1 or 2
-    let blinkSpeedMs = 450;
+    let resultData = null;
+    let blinkInterval = null;
+    let blinkFrame = 1;
+    let blinkSpeed = 400;
     let isBlinking = false;
 
-    // Elements
+    // Element References
     const presetSelect = document.getElementById('presetSelect');
     const inputRA = document.getElementById('inputRA');
     const inputDec = document.getElementById('inputDec');
@@ -484,6 +509,8 @@
     const epochStatusText = document.getElementById('epochStatusText');
     const selectEpoch1 = document.getElementById('selectEpoch1');
     const selectEpoch2 = document.getElementById('selectEpoch2');
+    const inputSigma = document.getElementById('inputSigma');
+    const snrCutoffLabel = document.getElementById('snrCutoffLabel');
 
     const btnRunSubtraction = document.getElementById('btnRunSubtraction');
     const runSpinner = document.getElementById('runSpinner');
@@ -491,74 +518,112 @@
 
     const statusAlert = document.getElementById('statusAlert');
     const statusMessage = document.getElementById('statusMessage');
-    const statusIcon = document.getElementById('statusIcon');
 
-    const resultsSection = document.getElementById('resultsSection');
     const statDeltaDays = document.getElementById('statDeltaDays');
-    const statEpochDates = document.getElementById('statEpochDates');
-    const statAnomaliesCount = document.getElementById('statAnomaliesCount');
     const statStd = document.getElementById('statStd');
     const statGridShape = document.getElementById('statGridShape');
+    const statAnomaliesCount = document.getElementById('statAnomaliesCount');
 
+    // Views & Tabs
+    const tab3Panel = document.getElementById('tab3Panel');
+    const tabBlink = document.getElementById('tabBlink');
+    const tabDifference = document.getElementById('tabDifference');
+    const view3Panel = document.getElementById('view3Panel');
+    const viewBlink = document.getElementById('viewBlink');
+    const viewDifference = document.getElementById('viewDifference');
+
+    // Images
     const imgEpoch1 = document.getElementById('imgEpoch1');
     const imgEpoch2 = document.getElementById('imgEpoch2');
     const imgDifference = document.getElementById('imgDifference');
+    const imgDiffLarge = document.getElementById('imgDiffLarge');
+    const placeholderEpoch1 = document.getElementById('placeholderEpoch1');
+    const placeholderEpoch2 = document.getElementById('placeholderEpoch2');
+    const placeholderDifference = document.getElementById('placeholderDifference');
     const panelEpoch1Date = document.getElementById('panelEpoch1Date');
     const panelEpoch2Date = document.getElementById('panelEpoch2Date');
 
+    // Blink Elements
     const blinkImg1 = document.getElementById('blinkImg1');
     const blinkImg2 = document.getElementById('blinkImg2');
-    const blinkBadge = document.getElementById('blinkBadge');
-    const blinkBadgeText = document.getElementById('blinkBadgeText');
-    const blinkBadgeDot = document.getElementById('blinkBadgeDot');
+    const blinkIndicatorText = document.getElementById('blinkIndicatorText');
+    const blinkIndicatorDot = document.getElementById('blinkIndicatorDot');
     const btnBlinkToggle = document.getElementById('btnBlinkToggle');
-    const blinkPlayIcon = document.getElementById('blinkPlayIcon');
-    const blinkPlayText = document.getElementById('blinkPlayText');
+    const blinkIcon = document.getElementById('blinkIcon');
+    const blinkText = document.getElementById('blinkText');
     const btnBlinkStep = document.getElementById('btnBlinkStep');
-    const blinkSpeedSlider = document.getElementById('blinkSpeedSlider');
-    const blinkSpeedLabel = document.getElementById('blinkSpeedLabel');
-    const btnSwitchToDiff = document.getElementById('btnSwitchToDiff');
+    const blinkSlider = document.getElementById('blinkSlider');
+    const blinkRateLabel = document.getElementById('blinkRateLabel');
+    const checkCrosshairs = document.getElementById('checkCrosshairs');
+    const crosshairH = document.getElementById('crosshairH');
+    const crosshairV = document.getElementById('crosshairV');
 
-    const anomaliesTableBody = document.getElementById('anomaliesTableBody');
-    const tableAnomaliesBadge = document.getElementById('tableAnomaliesBadge');
-    const anomSearchInput = document.getElementById('anomSearchInput');
-
-    const combinedModal = document.getElementById('combinedModal');
-    const btnToggleCombinedModal = document.getElementById('btnToggleCombinedModal');
+    // Table & Modal
+    const anomaliesTbody = document.getElementById('anomaliesTbody');
+    const anomTableBadge = document.getElementById('anomTableBadge');
+    const tableFilterInput = document.getElementById('tableFilterInput');
+    const btnExportCSV = document.getElementById('btnExportCSV');
+    const modalCombined = document.getElementById('modalCombined');
+    const btnOpenModal = document.getElementById('btnOpenModal');
     const btnCloseModal = document.getElementById('btnCloseModal');
-    const imgCombinedModal = document.getElementById('imgCombinedModal');
+    const imgModalCombined = document.getElementById('imgModalCombined');
 
-    // Utility: Show Toast Alert
-    function showAlert(msg, type = 'info') {
-      statusAlert.classList.remove('hidden', 'bg-red-950/80', 'border-red-700', 'text-red-200', 'bg-cyan-950/80', 'border-cyan-700', 'text-cyan-200', 'bg-emerald-950/80', 'border-emerald-700', 'text-emerald-200');
-      if (type === 'error') {
-        statusAlert.classList.add('bg-red-950/80', 'border-red-700', 'text-red-200');
-        statusIcon.textContent = '❌';
-      } else if (type === 'success') {
-        statusAlert.classList.add('bg-emerald-950/80', 'border-emerald-700', 'text-emerald-200');
-        statusIcon.textContent = '✅';
+    // Helper: Toast Alert
+    function showAlert(msg, isError = false) {
+      statusAlert.classList.remove('hidden', 'bg-red-950/60', 'border-red-800', 'text-red-200', 'bg-zinc-900', 'border-zinc-800', 'text-zinc-200');
+      if (isError) {
+        statusAlert.classList.add('bg-red-950/60', 'border-red-800', 'text-red-200');
       } else {
-        statusAlert.classList.add('bg-cyan-950/80', 'border-cyan-700', 'text-cyan-200');
-        statusIcon.textContent = '⚡';
+        statusAlert.classList.add('bg-zinc-900', 'border-zinc-800', 'text-zinc-200');
       }
       statusMessage.textContent = msg;
     }
 
-    // 1. Load Presets
-    async function loadPresets() {
+    // Tab Navigation
+    function setViewMode(mode) {
+      [tab3Panel, tabBlink, tabDifference].forEach(t => {
+        t.className = 'px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition';
+      });
+      [view3Panel, viewBlink, viewDifference].forEach(v => v.classList.add('hidden'));
+
+      if (mode === '3panel') {
+        tab3Panel.className = 'px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition';
+        view3Panel.classList.remove('hidden');
+        pauseBlink();
+      } else if (mode === 'blink') {
+        tabBlink.className = 'px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition';
+        viewBlink.classList.remove('hidden');
+        if (resultData) startBlink();
+      } else if (mode === 'diff') {
+        tabDifference.className = 'px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition';
+        viewDifference.classList.remove('hidden');
+        pauseBlink();
+      }
+    }
+
+    tab3Panel.addEventListener('click', () => setViewMode('3panel'));
+    tabBlink.addEventListener('click', () => setViewMode('blink'));
+    tabDifference.addEventListener('click', () => setViewMode('diff'));
+
+    // Threshold Slider
+    inputSigma.addEventListener('input', (e) => {
+      snrCutoffLabel.textContent = `${parseFloat(e.target.value).toFixed(1)} σ`;
+    });
+
+    // 1. Initialize Presets
+    async function initPresets() {
       try {
         const res = await fetch('/api/presets');
         const data = await res.json();
         presets = data.presets || [];
-        presetSelect.innerHTML = '<option value="">-- Choose NASA Test Target --</option>';
-        presets.forEach((p, idx) => {
+        presetSelect.innerHTML = '<option value="">Custom Coordinates</option>';
+        presets.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.id;
           opt.textContent = `${p.name} (${p.category})`;
           presetSelect.appendChild(opt);
         });
 
-        // Set WISE 0855 by default
         if (presets.length > 0) {
           presetSelect.value = presets[0].id;
           applyPreset(presets[0]);
@@ -568,26 +633,24 @@
       }
     }
 
-    function applyPreset(preset) {
-      if (!preset) return;
-      inputRA.value = preset.ra;
-      inputDec.value = preset.dec;
-      inputSize.value = preset.size || 0.05;
-      selectBandpass.value = preset.bandpass || 'SPHEREx-D2';
-      targetNameBadge.textContent = preset.name;
-      targetDescText.textContent = preset.description;
+    function applyPreset(p) {
+      inputRA.value = p.ra;
+      inputDec.value = p.dec;
+      inputSize.value = p.size || 0.05;
+      selectBandpass.value = p.bandpass || 'SPHEREx-D2';
+      targetNameBadge.textContent = p.name;
+      targetDescText.textContent = p.description;
     }
 
     presetSelect.addEventListener('change', () => {
-      const selected = presets.find(p => p.id === presetSelect.value);
-      if (selected) {
-        applyPreset(selected);
-        // Automatically fetch epochs for this new preset
+      const match = presets.find(p => p.id === presetSelect.value);
+      if (match) {
+        applyPreset(match);
         fetchEpochs();
       }
     });
 
-    // 2. Fetch Available Epochs
+    // 2. Fetch Archive Epochs
     async function fetchEpochs() {
       const ra = parseFloat(inputRA.value);
       const dec = parseFloat(inputDec.value);
@@ -595,7 +658,7 @@
       const bandpass = selectBandpass.value;
 
       if (isNaN(ra) || isNaN(dec)) {
-        showAlert('Please enter valid numerical RA and Dec values.', 'error');
+        showAlert('Invalid coordinates supplied.', true);
         return;
       }
 
@@ -603,26 +666,24 @@
       btnRunSubtraction.disabled = true;
       btnRunSubtraction.classList.add('opacity-50', 'cursor-not-allowed');
       fetchEpochsSpinner.classList.remove('hidden');
-      epochStatusText.textContent = 'Querying IRSA TAP...';
-      showAlert(`Querying TAP for ${bandpass} observations at (${ra.toFixed(4)}, ${dec.toFixed(4)})...`, 'info');
+      epochStatusText.textContent = 'Querying archive...';
 
       try {
         const url = `/api/epochs?ra=${ra}&dec=${dec}&size=${size}&bandpass=${encodeURIComponent(bandpass)}`;
         const res = await fetch(url);
         if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.detail || 'TAP query failed');
+          const err = await res.json();
+          throw new Error(err.detail || 'TAP query failure');
         }
         const data = await res.json();
         currentEpochs = data.epochs || [];
 
         epochCountBadge.textContent = `${currentEpochs.length} Epochs`;
-        epochStatusText.textContent = `Retrieved ${currentEpochs.length} observations`;
-        showAlert(`Successfully retrieved ${currentEpochs.length} observations from IRSA TAP.`, 'success');
-
-        populateEpochDropdowns();
+        epochStatusText.textContent = `Found ${currentEpochs.length} observations`;
+        showAlert(`Retrieved ${currentEpochs.length} observations from IRSA TAP.`);
+        populateEpochSelectors();
       } catch (err) {
-        showAlert(`TAP Query Error: ${err.message}`, 'error');
+        showAlert(err.message, true);
         epochStatusText.textContent = 'Query failed';
       } finally {
         btnFetchEpochs.disabled = false;
@@ -632,7 +693,7 @@
       }
     }
 
-    function populateEpochDropdowns() {
+    function populateEpochSelectors() {
       selectEpoch1.innerHTML = '';
       selectEpoch2.innerHTML = '';
 
@@ -643,49 +704,44 @@
       }
 
       currentEpochs.forEach((ep, idx) => {
-        const text = `#${idx} | ${ep.date_human} (${ep.obs_id})`;
+        const label = `#${idx} • ${ep.date_human.slice(0, 10)} • MJD ${ep.t_min.toFixed(1)}`;
         
         const opt1 = document.createElement('option');
         opt1.value = idx;
-        opt1.textContent = text;
+        opt1.textContent = label;
         selectEpoch1.appendChild(opt1);
 
         const opt2 = document.createElement('option');
         opt2.value = idx;
-        opt2.textContent = text;
+        opt2.textContent = label;
         selectEpoch2.appendChild(opt2);
       });
 
-      // Default: Epoch 1 = index 0 (oldest), Epoch 2 = last index (newest)
       selectEpoch1.value = 0;
       selectEpoch2.value = currentEpochs.length - 1;
     }
 
     btnFetchEpochs.addEventListener('click', fetchEpochs);
 
-    // 3. Run Subtraction Pipeline
-    async function runSubtraction() {
+    // 3. Subtraction Execution
+    async function executeSubtraction() {
       const ra = parseFloat(inputRA.value);
       const dec = parseFloat(inputDec.value);
       const size = parseFloat(inputSize.value);
       const bandpass = selectBandpass.value;
-      const epoch1Index = parseInt(selectEpoch1.value);
-      const epoch2Index = parseInt(selectEpoch2.value);
+      const idx1 = parseInt(selectEpoch1.value);
+      const idx2 = parseInt(selectEpoch2.value);
+      const sigma = parseFloat(inputSigma.value);
 
-      if (isNaN(ra) || isNaN(dec)) {
-        showAlert('Please provide valid RA and Dec coordinates.', 'error');
-        return;
-      }
-
-      if (currentEpochs.length >= 2 && epoch1Index === epoch2Index) {
-        showAlert('Epoch 1 and Epoch 2 must be different observation timestamps for temporal subtraction.', 'error');
+      if (currentEpochs.length >= 2 && idx1 === idx2) {
+        showAlert('Select two distinct observation epochs for subtraction.', true);
         return;
       }
 
       btnRunSubtraction.disabled = true;
       runSpinner.classList.remove('hidden');
-      runButtonText.textContent = 'Executing Pipeline (Align & Subtract)...';
-      showAlert('Downloading FITS cutouts, reprojecting celestial WCS grids, and calculating differences...', 'info');
+      runButtonText.textContent = 'Aligning & Subtracting...';
+      showAlert('Downloading FITS cutouts, computing WCS reprojection & background subtraction...');
 
       try {
         const payload = {
@@ -693,9 +749,9 @@
           dec: dec,
           size: size,
           bandpass: bandpass,
-          epoch1_index: isNaN(epoch1Index) ? 0 : epoch1Index,
-          epoch2_index: isNaN(epoch2Index) ? -1 : epoch2Index,
-          sigma_thresh: 3.0
+          epoch1_index: isNaN(idx1) ? 0 : idx1,
+          epoch2_index: isNaN(idx2) ? -1 : idx2,
+          sigma_thresh: sigma
         };
 
         const res = await fetch('/api/subtract', {
@@ -706,202 +762,209 @@
 
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.detail || 'Subtraction failed');
+          throw new Error(err.detail || 'Subtraction execution failed');
         }
 
-        subtractionResult = await res.json();
-        renderResults(subtractionResult);
-        showAlert(`Epoch subtraction complete! Detected ${subtractionResult.anomalies_count} anomalies.`, 'success');
-
+        resultData = await res.json();
+        renderWorkspace(resultData);
+        showAlert(`Subtraction complete. Identified ${resultData.anomalies_count} anomalies at >${sigma}σ significance.`);
       } catch (err) {
-        showAlert(`Pipeline Error: ${err.message}`, 'error');
+        showAlert(err.message, true);
       } finally {
         btnRunSubtraction.disabled = false;
         runSpinner.classList.add('hidden');
-        runButtonText.textContent = '🚀 Run Subtraction Pipeline';
+        runButtonText.textContent = 'Execute Subtraction Pipeline';
       }
     }
 
-    btnRunSubtraction.addEventListener('click', runSubtraction);
+    btnRunSubtraction.addEventListener('click', executeSubtraction);
 
-    // 4. Render Results
-    function renderResults(data) {
-      resultsSection.classList.remove('hidden');
+    // Keyboard shortcut (Enter to execute)
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        executeSubtraction();
+      }
+    });
 
-      // Stats
-      statDeltaDays.textContent = `${data.delta_days} days`;
-      statEpochDates.textContent = `${data.epoch1.date_human.slice(0, 10)} → ${data.epoch2.date_human.slice(0, 10)}`;
-      statAnomaliesCount.textContent = `${data.anomalies_count} Peaks`;
-      statStd.textContent = `${data.stats.std} MJy/sr`;
-      statGridShape.textContent = `${data.grid_shape[0]} × ${data.grid_shape[1]} px`;
+    // 4. Render Workspace & Figures
+    function renderWorkspace(data) {
+      // Summary Metrics
+      statDeltaDays.textContent = `${data.delta_days} d`;
+      statStd.textContent = `${data.stats.std.toFixed(4)}`;
+      statGridShape.textContent = `${data.grid_shape[0]} × ${data.grid_shape[1]}`;
+      statAnomaliesCount.textContent = `${data.anomalies_count}`;
 
-      // Images
+      // Dates
+      panelEpoch1Date.textContent = data.epoch1.date_human.slice(0, 10);
+      panelEpoch2Date.textContent = data.epoch2.date_human.slice(0, 10);
+
+      // Panel 1, 2, Diff
+      placeholderEpoch1.classList.add('hidden');
+      placeholderEpoch2.classList.add('hidden');
+      placeholderDifference.classList.add('hidden');
+
       imgEpoch1.src = data.images_base64.epoch1_png;
+      imgEpoch1.classList.remove('hidden');
+
       imgEpoch2.src = data.images_base64.epoch2_png;
+      imgEpoch2.classList.remove('hidden');
+
       imgDifference.src = data.images_base64.difference_png;
-      imgCombinedModal.src = data.images_base64.combined_png;
+      imgDifference.classList.remove('hidden');
 
-      panelEpoch1Date.textContent = data.epoch1.date_human.slice(0, 19);
-      panelEpoch2Date.textContent = data.epoch2.date_human.slice(0, 19);
+      imgDiffLarge.src = data.images_base64.difference_png;
+      imgModalCombined.src = data.images_base64.combined_png;
 
-      // Blink comparator images
+      // Blink images
       blinkImg1.src = data.images_base64.epoch1_png;
       blinkImg2.src = data.images_base64.epoch2_png;
 
-      // Start blinking automatically
-      startBlinking();
-
-      // Anomalies Table
-      renderAnomaliesTable(data.anomalies);
-
-      // Smooth scroll to results
-      resultsSection.scrollIntoView({ behavior: 'smooth' });
+      // Table
+      renderTable(data.anomalies);
     }
 
-    // 5. Blink Comparator Logic
-    function startBlinking() {
-      if (blinkIntervalId) clearInterval(blinkIntervalId);
+    // 5. Blink Comparator Engine
+    function startBlink() {
+      if (blinkInterval) clearInterval(blinkInterval);
       isBlinking = true;
-      blinkPlayIcon.textContent = '⏸️';
-      blinkPlayText.textContent = 'Pause Blink';
-
-      blinkIntervalId = setInterval(() => {
-        stepBlink();
-      }, blinkSpeedMs);
+      blinkIcon.textContent = '⏸';
+      blinkText.textContent = 'Pause';
+      blinkInterval = setInterval(toggleBlinkFrame, blinkSpeed);
     }
 
-    function pauseBlinking() {
-      if (blinkIntervalId) clearInterval(blinkIntervalId);
-      blinkIntervalId = null;
+    function pauseBlink() {
+      if (blinkInterval) clearInterval(blinkInterval);
+      blinkInterval = null;
       isBlinking = false;
-      blinkPlayIcon.textContent = '▶️';
-      blinkPlayText.textContent = 'Play Blink';
+      blinkIcon.textContent = '▶';
+      blinkText.textContent = 'Play';
     }
 
-    function stepBlink() {
-      if (blinkCurrentFrame === 1) {
-        blinkCurrentFrame = 2;
+    function toggleBlinkFrame() {
+      if (blinkFrame === 1) {
+        blinkFrame = 2;
         blinkImg1.style.opacity = '0';
         blinkImg2.style.opacity = '1';
-        blinkBadgeDot.className = 'w-2 h-2 rounded-full bg-indigo-400';
-        blinkBadgeText.className = 'text-indigo-300';
-        blinkBadgeText.textContent = `EPOCH 2 (${subtractionResult ? subtractionResult.epoch2.date_human.slice(0, 10) : 'Follow-up'})`;
+        blinkIndicatorDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
+        blinkIndicatorText.textContent = `EPOCH 2 (${resultData ? resultData.epoch2.date_human.slice(0, 10) : 'Target'})`;
       } else {
-        blinkCurrentFrame = 1;
+        blinkFrame = 1;
         blinkImg1.style.opacity = '1';
         blinkImg2.style.opacity = '0';
-        blinkBadgeDot.className = 'w-2 h-2 rounded-full bg-cyan-400';
-        blinkBadgeText.className = 'text-cyan-300';
-        blinkBadgeText.textContent = `EPOCH 1 (${subtractionResult ? subtractionResult.epoch1.date_human.slice(0, 10) : 'Baseline'})`;
+        blinkIndicatorDot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
+        blinkIndicatorText.textContent = `EPOCH 1 (${resultData ? resultData.epoch1.date_human.slice(0, 10) : 'Baseline'})`;
       }
     }
 
     btnBlinkToggle.addEventListener('click', () => {
-      if (isBlinking) {
-        pauseBlinking();
-      } else {
-        startBlinking();
-      }
+      if (isBlinking) pauseBlink();
+      else startBlink();
     });
 
     btnBlinkStep.addEventListener('click', () => {
-      pauseBlinking();
-      stepBlink();
+      pauseBlink();
+      toggleBlinkFrame();
     });
 
-    blinkSpeedSlider.addEventListener('input', (e) => {
-      blinkSpeedMs = parseInt(e.target.value);
-      blinkSpeedLabel.textContent = `${blinkSpeedMs} ms`;
-      if (isBlinking) {
-        startBlinking(); // Restart interval with new rate
-      }
+    blinkSlider.addEventListener('input', (e) => {
+      blinkSpeed = parseInt(e.target.value);
+      blinkRateLabel.textContent = `${blinkSpeed} ms`;
+      if (isBlinking) startBlink();
     });
 
-    let showingDiffInViewer = false;
-    btnSwitchToDiff.addEventListener('click', () => {
-      if (!subtractionResult) return;
-      showingDiffInViewer = !showingDiffInViewer;
-      if (showingDiffInViewer) {
-        pauseBlinking();
-        blinkImg1.src = subtractionResult.images_base64.difference_png;
-        blinkImg1.style.opacity = '1';
-        blinkImg2.style.opacity = '0';
-        blinkBadgeDot.className = 'w-2 h-2 rounded-full bg-rose-400';
-        blinkBadgeText.className = 'text-rose-300';
-        blinkBadgeText.textContent = 'DIFFERENCE MAP (Epoch 2 − Epoch 1)';
-        btnSwitchToDiff.textContent = 'Switch back to Blink Comparator';
+    checkCrosshairs.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        crosshairH.classList.remove('hidden');
+        crosshairV.classList.remove('hidden');
       } else {
-        blinkImg1.src = subtractionResult.images_base64.epoch1_png;
-        blinkImg2.src = subtractionResult.images_base64.epoch2_png;
-        btnSwitchToDiff.textContent = 'Show Difference Map in Viewer';
-        startBlinking();
+        crosshairH.classList.add('hidden');
+        crosshairV.classList.add('hidden');
       }
     });
 
-    // 6. Anomalies Table Rendering
-    function renderAnomaliesTable(anomalies) {
-      tableAnomaliesBadge.textContent = `${anomalies.length} candidates`;
-      anomaliesTableBody.innerHTML = '';
+    // 6. Anomalies Discovery Table
+    function renderTable(anomalies) {
+      anomTableBadge.textContent = `${anomalies.length} Candidates`;
+      anomaliesTbody.innerHTML = '';
 
       if (!anomalies || anomalies.length === 0) {
-        anomaliesTableBody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500">No significant statistical anomalies detected above threshold.</td></tr>';
+        anomaliesTbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-zinc-600">No candidates detected above threshold.</td></tr>';
         return;
       }
 
-      anomalies.forEach((anom, idx) => {
-        const isPos = anom.type.includes('Positive');
-        const badgeColor = isPos 
-          ? 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60' 
-          : 'bg-rose-950/80 text-rose-300 border-rose-700/60';
-        const snrColor = isPos ? 'text-cyan-400' : 'text-neon-pink';
+      anomalies.forEach((a, i) => {
+        const isPos = a.type.includes('Positive');
+        const badgeClass = isPos 
+          ? 'text-emerald-400 border border-emerald-500/20 bg-emerald-500/10' 
+          : 'text-rose-400 border border-rose-500/20 bg-rose-500/10';
+        const snrColor = isPos ? 'text-emerald-400' : 'text-rose-400';
 
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-space-850/60 transition';
+        tr.className = 'hover:bg-zinc-900 transition-colors cursor-pointer';
         tr.innerHTML = `
-          <td class="py-2.5 px-3.5 font-bold text-slate-400">#${idx + 1}</td>
-          <td class="py-2.5 px-3.5">
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${badgeColor}">
-              ${isPos ? '▲' : '▼'} ${anom.type}
+          <td class="py-2 px-3 text-zinc-500">#${i + 1}</td>
+          <td class="py-2 px-3">
+            <span class="inline-block px-1.5 py-0.5 rounded text-[10px] ${badgeClass}">
+              ${isPos ? 'Positive Dipole' : 'Negative Dipole'}
             </span>
           </td>
-          <td class="py-2.5 px-3.5 font-bold ${snrColor}">${anom.snr > 0 ? '+' : ''}${anom.snr.toFixed(2)}σ</td>
-          <td class="py-2.5 px-3.5 text-slate-300">${anom.flux_diff > 0 ? '+' : ''}${anom.flux_diff.toFixed(5)}</td>
-          <td class="py-2.5 px-3.5 text-cyan-200">${anom.ra.toFixed(6)}°</td>
-          <td class="py-2.5 px-3.5 text-indigo-200">${anom.dec.toFixed(6)}°</td>
-          <td class="py-2.5 px-3.5 text-slate-400">(${anom.pixel_x}, ${anom.pixel_y})</td>
+          <td class="py-2 px-3 font-semibold ${snrColor}">${a.snr > 0 ? '+' : ''}${a.snr.toFixed(2)}σ</td>
+          <td class="py-2 px-3 text-zinc-300">${a.flux_diff > 0 ? '+' : ''}${a.flux_diff.toFixed(5)}</td>
+          <td class="py-2 px-3 text-zinc-200">${a.ra.toFixed(6)}°</td>
+          <td class="py-2 px-3 text-zinc-200">${a.dec.toFixed(6)}°</td>
+          <td class="py-2 px-3 text-zinc-500">(${a.pixel_x}, ${a.pixel_y})</td>
         `;
-        anomaliesTableBody.appendChild(tr);
+        anomaliesTbody.appendChild(tr);
       });
     }
 
-    // Filter table by search
-    anomSearchInput.addEventListener('input', (e) => {
+    // Filter Table
+    tableFilterInput.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
-      if (!subtractionResult) return;
-      const filtered = subtractionResult.anomalies.filter(a => 
-        a.type.toLowerCase().includes(q) || 
+      if (!resultData) return;
+      const filtered = resultData.anomalies.filter(a => 
+        a.type.toLowerCase().includes(q) ||
         a.snr.toString().includes(q) ||
         a.ra.toString().includes(q) ||
         a.dec.toString().includes(q)
       );
-      renderAnomaliesTable(filtered);
+      renderTable(filtered);
     });
 
-    // 7. Combined Modal View
-    btnToggleCombinedModal.addEventListener('click', () => {
-      combinedModal.classList.remove('hidden');
-    });
-    btnCloseModal.addEventListener('click', () => {
-      combinedModal.classList.add('hidden');
-    });
-    combinedModal.addEventListener('click', (e) => {
-      if (e.target === combinedModal) combinedModal.classList.add('hidden');
+    // CSV Export
+    btnExportCSV.addEventListener('click', () => {
+      if (!resultData || !resultData.anomalies.length) return;
+      const headers = ['Rank', 'Type', 'SNR', 'Delta_Flux_MJy_sr', 'RA_deg', 'Dec_deg', 'Pixel_X', 'Pixel_Y'];
+      const rows = resultData.anomalies.map((a, i) => [
+        i + 1,
+        `"${a.type}"`,
+        a.snr,
+        a.flux_diff,
+        a.ra,
+        a.dec,
+        a.pixel_x,
+        a.pixel_y
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `SPHEREx_anomalies_${inputRA.value}_${inputDec.value}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     });
 
-    // Initial boot
+    // Modal
+    btnOpenModal.addEventListener('click', () => modalCombined.classList.remove('hidden'));
+    btnCloseModal.addEventListener('click', () => modalCombined.classList.add('hidden'));
+    modalCombined.addEventListener('click', (e) => {
+      if (e.target === modalCombined) modalCombined.classList.add('hidden');
+    });
+
+    // Boot
     window.addEventListener('DOMContentLoaded', async () => {
-      await loadPresets();
-      // Auto-query epochs for initial target
+      await initPresets();
       fetchEpochs();
     });
   </script>

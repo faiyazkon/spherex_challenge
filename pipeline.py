@@ -369,9 +369,9 @@ def detect_anomalies(difference, wcs, sigma_thresh=3.0):
 # 5. Image rendering helpers (base64 PNG output)
 # ---------------------------------------------------------------------------
 
-def _fig_to_base64(fig, dpi=150):
+def _fig_to_base64(fig, dpi=160):
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight", facecolor="#090d16", edgecolor="none")
+    fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight", facecolor="#09090b", edgecolor="none")
     plt.close(fig)
     buf.seek(0)
     b64_str = base64.b64encode(buf.read()).decode("utf-8")
@@ -379,8 +379,8 @@ def _fig_to_base64(fig, dpi=150):
 
 
 def render_single_panel(data, wcs, title, cmap="viridis", symmetric=False, label="MJy/sr", anomalies=None):
-    fig = plt.figure(figsize=(7, 6), facecolor="#090d16")
-    ax = fig.add_subplot(1, 1, 1, projection=wcs, facecolor="#040711")
+    fig = plt.figure(figsize=(7, 6.2), facecolor="#09090b")
+    ax = fig.add_subplot(1, 1, 1, projection=wcs, facecolor="#000000")
 
     valid = data[np.isfinite(data)]
     if len(valid) == 0:
@@ -399,51 +399,51 @@ def render_single_panel(data, wcs, title, cmap="viridis", symmetric=False, label
     im = ax.imshow(data, origin="lower", cmap=cmap, norm=Normalize(vmin=vmin, vmax=vmax))
 
     if anomalies:
-        for anom in anomalies[:10]:
+        for anom in anomalies[:8]:
             x, y = anom["pixel_x"], anom["pixel_y"]
-            color = "#00f0ff" if "Positive" in anom["type"] else "#ff2a6d"
-            circ = Circle((x, y), radius=0.8, fill=False, edgecolor=color, linewidth=1.8, linestyle="--")
+            color = "#10b981" if "Positive" in anom["type"] else "#f43f5e"
+            circ = Circle((x, y), radius=0.85, fill=False, edgecolor=color, linewidth=1.5, linestyle="-")
             ax.add_patch(circ)
 
-    ax.set_title(title, color="#e2e8f0", fontsize=13, fontweight="bold", pad=12)
-    ax.tick_params(colors="#94a3b8", labelsize=9)
-    ax.coords[0].set_axislabel("RA (ICRS)", color="#cbd5e1", fontsize=10)
-    ax.coords[1].set_axislabel("Dec (ICRS)", color="#cbd5e1", fontsize=10)
-    ax.coords.grid(color="#334155", alpha=0.4, linestyle=":")
+    ax.set_title(title, color="#fafafa", fontsize=11, fontweight="600", pad=12)
+    ax.tick_params(colors="#71717a", labelsize=8)
+    ax.coords[0].set_axislabel("RA (ICRS)", color="#a1a1aa", fontsize=9)
+    ax.coords[1].set_axislabel("Dec (ICRS)", color="#a1a1aa", fontsize=9)
+    ax.coords.grid(color="#27272a", alpha=0.6, linestyle=":")
 
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cbar.ax.tick_params(colors="#94a3b8", labelsize=8)
-    cbar.set_label(label, color="#cbd5e1", fontsize=10)
+    cbar.ax.tick_params(colors="#71717a", labelsize=8)
+    cbar.set_label(label, color="#a1a1aa", fontsize=9)
 
     fig.tight_layout()
     return _fig_to_base64(fig)
 
 
 def render_combined_panel(epoch1, epoch2_aligned, difference, wcs1, title="SPHEREx Epoch Subtraction", anomalies=None):
-    fig = plt.figure(figsize=(19, 6.2), facecolor="#090d16")
+    fig = plt.figure(figsize=(18, 5.8), facecolor="#09090b")
 
     # Panel 1: Epoch 1
-    ax1 = fig.add_subplot(1, 3, 1, projection=wcs1, facecolor="#040711")
+    ax1 = fig.add_subplot(1, 3, 1, projection=wcs1, facecolor="#000000")
     v1_min = np.nanpercentile(epoch1[np.isfinite(epoch1)], 1)
     v1_max = np.nanpercentile(epoch1[np.isfinite(epoch1)], 99)
     im1 = ax1.imshow(epoch1, origin="lower", cmap="viridis", norm=Normalize(vmin=v1_min, vmax=v1_max))
-    ax1.set_title("Epoch 1 (Baseline)", color="#38bdf8", fontsize=12, fontweight="bold", pad=10)
+    ax1.set_title("Epoch 1 (Baseline)", color="#e4e4e7", fontsize=11, fontweight="600", pad=10)
     cbar1 = fig.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
-    cbar1.ax.tick_params(colors="#94a3b8", labelsize=8)
-    cbar1.set_label("MJy/sr", color="#cbd5e1", fontsize=9)
+    cbar1.ax.tick_params(colors="#71717a", labelsize=8)
+    cbar1.set_label("MJy/sr", color="#a1a1aa", fontsize=8)
 
     # Panel 2: Epoch 2
-    ax2 = fig.add_subplot(1, 3, 2, projection=wcs1, facecolor="#040711")
+    ax2 = fig.add_subplot(1, 3, 2, projection=wcs1, facecolor="#000000")
     v2_min = np.nanpercentile(epoch2_aligned[np.isfinite(epoch2_aligned)], 1)
     v2_max = np.nanpercentile(epoch2_aligned[np.isfinite(epoch2_aligned)], 99)
     im2 = ax2.imshow(epoch2_aligned, origin="lower", cmap="viridis", norm=Normalize(vmin=v2_min, vmax=v2_max))
-    ax2.set_title("Epoch 2 (Aligned)", color="#38bdf8", fontsize=12, fontweight="bold", pad=10)
+    ax2.set_title("Epoch 2 (WCS Aligned)", color="#e4e4e7", fontsize=11, fontweight="600", pad=10)
     cbar2 = fig.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
-    cbar2.ax.tick_params(colors="#94a3b8", labelsize=8)
-    cbar2.set_label("MJy/sr", color="#cbd5e1", fontsize=9)
+    cbar2.ax.tick_params(colors="#71717a", labelsize=8)
+    cbar2.set_label("MJy/sr", color="#a1a1aa", fontsize=8)
 
     # Panel 3: Difference
-    ax3 = fig.add_subplot(1, 3, 3, projection=wcs1, facecolor="#040711")
+    ax3 = fig.add_subplot(1, 3, 3, projection=wcs1, facecolor="#000000")
     diff_valid = difference[np.isfinite(difference)]
     if len(diff_valid) > 0:
         d_min = np.nanpercentile(diff_valid, 1)
@@ -452,26 +452,26 @@ def render_combined_panel(epoch1, epoch2_aligned, difference, wcs1, title="SPHER
     else:
         abs_max = 1.0
     im3 = ax3.imshow(difference, origin="lower", cmap="RdBu_r", norm=Normalize(vmin=-abs_max, vmax=abs_max))
-    ax3.set_title("Difference (Epoch 2 − Epoch 1)", color="#f43f5e", fontsize=12, fontweight="bold", pad=10)
+    ax3.set_title("Difference (Epoch 2 − Epoch 1)", color="#e4e4e7", fontsize=11, fontweight="600", pad=10)
     cbar3 = fig.colorbar(im3, ax=ax3, fraction=0.046, pad=0.04)
-    cbar3.ax.tick_params(colors="#94a3b8", labelsize=8)
-    cbar3.set_label("ΔMJy/sr", color="#cbd5e1", fontsize=9)
+    cbar3.ax.tick_params(colors="#71717a", labelsize=8)
+    cbar3.set_label("ΔMJy/sr", color="#a1a1aa", fontsize=8)
 
     if anomalies:
         for anom in anomalies[:8]:
             x, y = anom["pixel_x"], anom["pixel_y"]
-            color = "#38bdf8" if "Positive" in anom["type"] else "#f43f5e"
-            circ = Circle((x, y), radius=0.9, fill=False, edgecolor=color, linewidth=1.8, linestyle="--")
+            color = "#10b981" if "Positive" in anom["type"] else "#f43f5e"
+            circ = Circle((x, y), radius=0.9, fill=False, edgecolor=color, linewidth=1.5, linestyle="-")
             ax3.add_patch(circ)
-            ax3.text(x + 1.2, y + 0.3, f"{anom['snr']:+.1f}σ", color=color, fontsize=8, fontweight="bold")
+            ax3.text(x + 1.2, y + 0.3, f"{anom['snr']:+.1f}σ", color=color, fontsize=8, fontweight="600")
 
     for ax in (ax1, ax2, ax3):
-        ax.tick_params(colors="#94a3b8", labelsize=8)
-        ax.coords[0].set_axislabel("RA (ICRS)", color="#cbd5e1", fontsize=9)
-        ax.coords[1].set_axislabel("Dec (ICRS)", color="#cbd5e1", fontsize=9)
-        ax.coords.grid(color="#334155", alpha=0.35, linestyle=":")
+        ax.tick_params(colors="#71717a", labelsize=8)
+        ax.coords[0].set_axislabel("RA (ICRS)", color="#a1a1aa", fontsize=8)
+        ax.coords[1].set_axislabel("Dec (ICRS)", color="#a1a1aa", fontsize=8)
+        ax.coords.grid(color="#27272a", alpha=0.5, linestyle=":")
 
-    fig.suptitle(title, color="#f8fafc", fontsize=14, fontweight="bold", y=0.98)
+    fig.suptitle(title, color="#fafafa", fontsize=12, fontweight="600", y=0.98)
     fig.tight_layout()
     return _fig_to_base64(fig)
 
