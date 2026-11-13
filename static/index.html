@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPHEREx Temporal Epoch Subtraction & Anomaly Engine</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            space: {
+              950: '#040711',
+              900: '#080d1a',
+              850: '#0d1527',
+              800: '#131e38',
+              700: '#1d2c52',
+            },
+            cyan: {
+              400: '#22d3ee',
+              500: '#06b6d4',
+            },
+            neon: {
+              blue: '#00f0ff',
+              pink: '#ff2a6d',
+              amber: '#fbbf24',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom glow effects */
+    .glow-cyan {
+      box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.35);
+    }
+    .glow-rose {
+      box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.35);
+    }
+    /* Starfield ambient backdrop */
+    body {
+      background-color: #040711;
+      background-image: 
+        radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 100px 150px, #38bdf8, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 240px 80px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 380px 290px, #a855f7, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 520px 200px, #38bdf8, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 700px 390px, #ffffff, rgba(0,0,0,0));
+      background-repeat: repeat;
+      background-size: 800px 600px;
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #080d1a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen font-sans flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-space-700/60 bg-space-950/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-lg font-bold tracking-tight text-white">SPHEREx</span>
+            <span class="text-xs uppercase tracking-wider font-mono px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 font-semibold">Discovery Engine</span>
+          </div>
+          <p class="text-xs text-slate-400">Temporal Epoch Subtraction & Anomaly Pipeline</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4 text-xs font-mono">
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-space-900 border border-space-700/80 text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>IRSA TAP: Connected</span>
+        </div>
+        <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-space-900 border border-space-700/80 text-slate-300">
+          <span class="text-cyan-400 font-semibold">WCS Interp</span>
+          <span class="text-slate-500">|</span>
+          <span class="text-indigo-400 font-semibold">Flags Bitmasking</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6 w-full">
+
+    <!-- Top Target Selection & Control Card -->
+    <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-5 shadow-2xl relative overflow-hidden backdrop-blur-sm">
+      <div class="absolute -top-24 -right-24 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        
+        <!-- Left: Presets & Target Config -->
+        <div class="lg:col-span-8 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-space-700/60 pb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+              <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Science Target Configuration</h2>
+            </div>
+            <!-- Preset selector dropdown -->
+            <div class="flex items-center space-x-2">
+              <label for="presetSelect" class="text-xs text-slate-400 font-medium">Quick Preset:</label>
+              <select id="presetSelect" class="bg-space-800 border border-space-700 text-cyan-300 text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-cyan-500 focus:outline-none">
+                <option value="">-- Choose NASA Test Target --</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <!-- RA Input -->
+            <div>
+              <label class="block text-xs font-mono text-slate-400 mb-1">RA (deg, ICRS)</label>
+              <input type="number" step="any" id="inputRA" value="133.795129" 
+                class="w-full bg-space-850 border border-space-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none">
+            </div>
+
+            <!-- Dec Input -->
+            <div>
+              <label class="block text-xs font-mono text-slate-400 mb-1">Dec (deg, ICRS)</label>
+              <input type="number" step="any" id="inputDec" value="-7.245147" 
+                class="w-full bg-space-850 border border-space-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none">
+            </div>
+
+            <!-- Cutout Size -->
+            <div>
+              <label class="block text-xs font-mono text-slate-400 mb-1">Size (deg)</label>
+              <input type="number" step="0.01" min="0.01" max="0.5" id="inputSize" value="0.05" 
+                class="w-full bg-space-850 border border-space-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none">
+            </div>
+
+            <!-- Bandpass Selector -->
+            <div>
+              <label class="block text-xs font-mono text-slate-400 mb-1">Bandpass</label>
+              <select id="selectBandpass" 
+                class="w-full bg-space-850 border border-space-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none">
+                <option value="SPHEREx-D1">SPHEREx-D1 (0.75-1.11 μm)</option>
+                <option value="SPHEREx-D2" selected>SPHEREx-D2 (1.11-1.64 μm)</option>
+                <option value="SPHEREx-D3">SPHEREx-D3 (1.64-2.42 μm)</option>
+                <option value="SPHEREx-D4">SPHEREx-D4 (2.42-3.82 μm)</option>
+                <option value="SPHEREx-D5">SPHEREx-D5 (3.82-4.42 μm)</option>
+                <option value="SPHEREx-D6">SPHEREx-D6 (4.42-5.00 μm)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Target Description Pill -->
+          <div id="targetDescriptionBox" class="p-2.5 rounded-lg bg-space-850/80 border border-space-700/60 text-xs text-slate-300 flex items-start space-x-2">
+            <span class="text-cyan-400 text-sm">ℹ️</span>
+            <div>
+              <span id="targetNameBadge" class="font-bold text-white mr-1.5">WISE 0855−0714</span>
+              <span id="targetDescText" class="text-slate-400">Coldest known brown dwarf (~250 K) with large proper motion (~8.1 arcsec/yr), creating textbook dipole signatures.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Epoch Picker & Action Trigger -->
+        <div class="lg:col-span-4 bg-space-850/90 border border-space-700/80 rounded-xl p-4 space-y-3.5 flex flex-col justify-between h-full">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Temporal Epochs</span>
+              <button id="btnFetchEpochs" class="text-xs px-2.5 py-1 rounded bg-space-700 hover:bg-space-600 text-cyan-300 font-medium transition flex items-center space-x-1">
+                <span id="fetchEpochsSpinner" class="hidden animate-spin">⏳</span>
+                <span>Query Available Epochs</span>
+              </button>
+            </div>
+
+            <!-- Epoch Count Badge -->
+            <div class="text-[11px] font-mono text-slate-400 mb-2 flex items-center justify-between">
+              <span id="epochStatusText">Ready to query TAP</span>
+              <span id="epochCountBadge" class="px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-700 font-semibold">0 Epochs</span>
+            </div>
+
+            <div class="space-y-2">
+              <!-- Epoch 1 Dropdown -->
+              <div>
+                <label class="block text-[11px] font-mono text-cyan-400 mb-0.5 font-semibold">Epoch 1 (Baseline / Reference):</label>
+                <select id="selectEpoch1" class="w-full bg-space-900 border border-space-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono">
+                  <option value="0">Default: Oldest Available Epoch</option>
+                </select>
+              </div>
+
+              <!-- Epoch 2 Dropdown -->
+              <div>
+                <label class="block text-[11px] font-mono text-indigo-400 mb-0.5 font-semibold">Epoch 2 (Follow-up / Target):</label>
+                <select id="selectEpoch2" class="w-full bg-space-900 border border-space-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono">
+                  <option value="-1">Default: Newest Available Epoch</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Run Subtraction Button -->
+          <div class="pt-2">
+            <button id="btnRunSubtraction" 
+              class="w-full py-3 px-4 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white shadow-lg shadow-cyan-500/25 transition duration-200 flex items-center justify-center space-x-2">
+              <span id="runSpinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+              <span id="runButtonText">🚀 Run Subtraction Pipeline</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Live Status / Message Toast -->
+    <div id="statusAlert" class="hidden p-3.5 rounded-xl border text-xs flex items-center justify-between font-mono">
+      <div class="flex items-center space-x-2">
+        <span id="statusIcon">⚡</span>
+        <span id="statusMessage">Processing request...</span>
+      </div>
+      <button onclick="document.getElementById('statusAlert').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
+    </div>
+
+    <!-- Subtraction Results Section -->
+    <div id="resultsSection" class="hidden space-y-6">
+
+      <!-- Stats Metric Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-space-900/90 border border-space-700/80 rounded-xl p-3.5 backdrop-blur-sm">
+          <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Temporal Baseline (Δt)</div>
+          <div class="text-xl font-bold font-mono text-cyan-400 mt-1" id="statDeltaDays">-- days</div>
+          <div class="text-[10px] text-slate-500 mt-0.5" id="statEpochDates">Epoch 1 vs Epoch 2</div>
+        </div>
+        <div class="bg-space-900/90 border border-space-700/80 rounded-xl p-3.5 backdrop-blur-sm">
+          <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Detected Anomalies</div>
+          <div class="text-xl font-bold font-mono text-neon-pink mt-1" id="statAnomaliesCount">0 Peaks</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Statistical dipoles > 3.0σ</div>
+        </div>
+        <div class="bg-space-900/90 border border-space-700/80 rounded-xl p-3.5 backdrop-blur-sm">
+          <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Background Std (σ)</div>
+          <div class="text-xl font-bold font-mono text-amber-400 mt-1" id="statStd">-- MJy/sr</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Sigma-clipped noise level</div>
+        </div>
+        <div class="bg-space-900/90 border border-space-700/80 rounded-xl p-3.5 backdrop-blur-sm">
+          <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Cutout Array Grid</div>
+          <div class="text-xl font-bold font-mono text-emerald-400 mt-1" id="statGridShape">-- × -- px</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Reprojected WCS grid</div>
+        </div>
+      </div>
+
+      <!-- 3-Panel Inspection Layout -->
+      <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-5 shadow-2xl backdrop-blur-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-space-700/60 pb-3">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white">Three-Panel WCS Astronomical Inspection</h3>
+          </div>
+          <div class="flex items-center space-x-2 text-xs">
+            <button id="btnToggleCombinedModal" class="px-3 py-1 rounded-lg bg-space-800 hover:bg-space-700 text-cyan-300 border border-space-700 font-medium transition">
+              🔍 Open Combined 3-Panel Plot
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Panel 1: Epoch 1 -->
+          <div class="bg-space-950 border border-space-700/60 rounded-xl p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-cyan-300 font-mono">Epoch 1 (Baseline)</span>
+              <span id="panelEpoch1Date" class="text-[10px] px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 font-mono">--</span>
+            </div>
+            <div class="relative rounded-lg overflow-hidden border border-space-800 aspect-square flex items-center justify-center bg-black">
+              <img id="imgEpoch1" src="" alt="Epoch 1" class="w-full h-full object-contain">
+            </div>
+            <div class="text-[10px] font-mono text-slate-400 mt-2 text-center">Calibrated & ZODI-Subtracted</div>
+          </div>
+
+          <!-- Panel 2: Epoch 2 -->
+          <div class="bg-space-950 border border-space-700/60 rounded-xl p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-cyan-300 font-mono">Epoch 2 (Aligned)</span>
+              <span id="panelEpoch2Date" class="text-[10px] px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-400 border border-indigo-800/60 font-mono">--</span>
+            </div>
+            <div class="relative rounded-lg overflow-hidden border border-space-800 aspect-square flex items-center justify-center bg-black">
+              <img id="imgEpoch2" src="" alt="Epoch 2" class="w-full h-full object-contain">
+            </div>
+            <div class="text-[10px] font-mono text-slate-400 mt-2 text-center">Reprojected to Epoch 1 WCS</div>
+          </div>
+
+          <!-- Panel 3: Difference -->
+          <div class="bg-space-950 border border-space-700/60 rounded-xl p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-neon-pink font-mono">Difference (Epoch 2 − Epoch 1)</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-800/60 font-mono">RdBu_r Dipoles</span>
+            </div>
+            <div class="relative rounded-lg overflow-hidden border border-space-800 aspect-square flex items-center justify-center bg-black">
+              <img id="imgDifference" src="" alt="Difference Map" class="w-full h-full object-contain">
+            </div>
+            <div class="text-[10px] font-mono text-slate-400 mt-2 text-center">Positive (Cyan) / Negative (Rose) Dipoles</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Blink Comparator Section -->
+      <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-5 shadow-2xl backdrop-blur-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-space-700/60 pb-3">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white">Interactive Blink Comparator</h3>
+            <span class="text-xs font-mono text-slate-400 hidden sm:inline">(Watch proper motion & variable flux in real-time)</span>
+          </div>
+
+          <!-- Blink Player Controls -->
+          <div class="flex items-center space-x-3">
+            <button id="btnBlinkToggle" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold shadow transition flex items-center space-x-1.5">
+              <span id="blinkPlayIcon">⏸️</span>
+              <span id="blinkPlayText">Pause Blink</span>
+            </button>
+            <button id="btnBlinkStep" class="px-3 py-1.5 rounded-lg bg-space-800 hover:bg-space-700 text-slate-300 font-mono text-xs border border-space-700 transition">
+              Next Frame ⏩
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+          
+          <!-- Large Blink Canvas Container -->
+          <div class="lg:col-span-8 flex flex-col items-center">
+            <div class="relative w-full max-w-lg aspect-square bg-black rounded-xl overflow-hidden border border-space-700/80 shadow-2xl flex items-center justify-center">
+              
+              <!-- Frame 1 Image -->
+              <img id="blinkImg1" src="" alt="Blink Frame 1" class="absolute inset-0 w-full h-full object-contain transition-opacity duration-100 opacity-100">
+              
+              <!-- Frame 2 Image -->
+              <img id="blinkImg2" src="" alt="Blink Frame 2" class="absolute inset-0 w-full h-full object-contain transition-opacity duration-100 opacity-0">
+
+              <!-- Active Frame Indicator Badge -->
+              <div class="absolute top-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-md bg-space-950/80 border text-xs font-mono font-bold flex items-center space-x-2 shadow-lg" id="blinkBadge">
+                <span class="w-2 h-2 rounded-full bg-cyan-400" id="blinkBadgeDot"></span>
+                <span id="blinkBadgeText" class="text-cyan-300">EPOCH 1 (Baseline)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blink Settings & Information -->
+          <div class="lg:col-span-4 bg-space-850/80 border border-space-700/70 rounded-xl p-4 space-y-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Blink Interval Rate</label>
+              <div class="flex items-center space-x-3">
+                <input type="range" id="blinkSpeedSlider" min="150" max="1200" step="50" value="450" 
+                  class="w-full accent-cyan-400 cursor-pointer">
+                <span id="blinkSpeedLabel" class="text-xs font-mono font-bold text-cyan-400 w-16 text-right">450 ms</span>
+              </div>
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                <span>Fast (150ms)</span>
+                <span>Slow (1200ms)</span>
+              </div>
+            </div>
+
+            <div class="border-t border-space-700/60 pt-3 space-y-2 text-xs">
+              <div class="text-slate-300 font-semibold">How to spot discoveries:</div>
+              <ul class="space-y-1.5 text-slate-400 text-[11px] list-disc list-inside">
+                <li><strong class="text-cyan-300">Fast Proper Motion:</strong> Look for a source shifting position back-and-forth between epochs (like WISE 0855 or Barnard's Star).</li>
+                <li><strong class="text-amber-300">Variable Stars:</strong> Look for an object staying fixed in place but rhythmically brightening or fading in flux.</li>
+                <li><strong class="text-neon-pink">Transient Outbursts:</strong> Look for an object present in only one epoch.</li>
+              </ul>
+            </div>
+
+            <div class="border-t border-space-700/60 pt-3">
+              <button id="btnSwitchToDiff" class="w-full py-2 px-3 rounded-lg bg-space-800 hover:bg-space-700 border border-space-700 text-xs font-mono text-cyan-300 transition">
+                Show Difference Map in Viewer
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Detected Anomalies Table -->
+      <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-5 shadow-2xl backdrop-blur-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-space-700/60 pb-3">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-neon-pink"></span>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white">Discovered Moving & Variable Anomalies</h3>
+            <span id="tableAnomaliesBadge" class="text-xs font-mono px-2 py-0.5 rounded-full bg-rose-950/80 text-rose-300 border border-rose-800/60">0 candidates</span>
+          </div>
+
+          <!-- Table Search / Filter -->
+          <div class="flex items-center space-x-2 text-xs">
+            <input type="text" id="anomSearchInput" placeholder="Filter by type or SNR..." 
+              class="bg-space-800 border border-space-700 rounded-lg px-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono text-xs">
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="overflow-x-auto rounded-xl border border-space-700/70">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-space-850/90 text-slate-400 border-b border-space-700/70">
+              <tr>
+                <th class="py-3 px-3.5"># Rank</th>
+                <th class="py-3 px-3.5">Dipole Status / Classification</th>
+                <th class="py-3 px-3.5">Significance (SNR)</th>
+                <th class="py-3 px-3.5">Flux Difference (ΔMJy/sr)</th>
+                <th class="py-3 px-3.5">RA (deg, ICRS)</th>
+                <th class="py-3 px-3.5">Dec (deg, ICRS)</th>
+                <th class="py-3 px-3.5">Pixel Grid (X, Y)</th>
+              </tr>
+            </thead>
+            <tbody id="anomaliesTableBody" class="divide-y divide-space-800 bg-space-950/60">
+              <tr>
+                <td colspan="7" class="py-8 text-center text-slate-500">No subtraction run yet. Click "Run Subtraction Pipeline" above.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Combined 3-Panel Modal -->
+  <div id="combinedModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-space-900 border border-space-700 rounded-2xl max-w-6xl w-full p-5 space-y-3 relative shadow-2xl">
+      <div class="flex items-center justify-between border-b border-space-700 pb-2">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">Combined High-Resolution Subtraction Plot</h3>
+        <button id="btnCloseModal" class="text-slate-400 hover:text-white text-xl font-bold px-2 py-1">&times;</button>
+      </div>
+      <div class="max-h-[80vh] overflow-auto flex items-center justify-center bg-black rounded-lg p-2 border border-space-800">
+        <img id="imgCombinedModal" src="" alt="Combined High-Res Plot" class="max-w-full h-auto rounded">
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-space-700/50 bg-space-950/80 py-4 text-center text-xs text-slate-500 font-mono mt-auto">
+    SPHEREx Spectral Imaging Pipeline &bull; Automated WCS Reprojection &bull; Zodiacal Subtraction &bull; NASA IRSA TAP
+  </footer>
+
+  <!-- Vanilla JavaScript Logic -->
+  <script>
+    // State
+    let presets = [];
+    let currentEpochs = [];
+    let subtractionResult = null;
+    let blinkIntervalId = null;
+    let blinkCurrentFrame = 1; // 1 or 2
+    let blinkSpeedMs = 450;
+    let isBlinking = false;
+
+    // Elements
+    const presetSelect = document.getElementById('presetSelect');
+    const inputRA = document.getElementById('inputRA');
+    const inputDec = document.getElementById('inputDec');
+    const inputSize = document.getElementById('inputSize');
+    const selectBandpass = document.getElementById('selectBandpass');
+    const targetNameBadge = document.getElementById('targetNameBadge');
+    const targetDescText = document.getElementById('targetDescText');
+
+    const btnFetchEpochs = document.getElementById('btnFetchEpochs');
+    const fetchEpochsSpinner = document.getElementById('fetchEpochsSpinner');
+    const epochCountBadge = document.getElementById('epochCountBadge');
+    const epochStatusText = document.getElementById('epochStatusText');
+    const selectEpoch1 = document.getElementById('selectEpoch1');
+    const selectEpoch2 = document.getElementById('selectEpoch2');
+
+    const btnRunSubtraction = document.getElementById('btnRunSubtraction');
+    const runSpinner = document.getElementById('runSpinner');
+    const runButtonText = document.getElementById('runButtonText');
+
+    const statusAlert = document.getElementById('statusAlert');
+    const statusMessage = document.getElementById('statusMessage');
+    const statusIcon = document.getElementById('statusIcon');
+
+    const resultsSection = document.getElementById('resultsSection');
+    const statDeltaDays = document.getElementById('statDeltaDays');
+    const statEpochDates = document.getElementById('statEpochDates');
+    const statAnomaliesCount = document.getElementById('statAnomaliesCount');
+    const statStd = document.getElementById('statStd');
+    const statGridShape = document.getElementById('statGridShape');
+
+    const imgEpoch1 = document.getElementById('imgEpoch1');
+    const imgEpoch2 = document.getElementById('imgEpoch2');
+    const imgDifference = document.getElementById('imgDifference');
+    const panelEpoch1Date = document.getElementById('panelEpoch1Date');
+    const panelEpoch2Date = document.getElementById('panelEpoch2Date');
+
+    const blinkImg1 = document.getElementById('blinkImg1');
+    const blinkImg2 = document.getElementById('blinkImg2');
+    const blinkBadge = document.getElementById('blinkBadge');
+    const blinkBadgeText = document.getElementById('blinkBadgeText');
+    const blinkBadgeDot = document.getElementById('blinkBadgeDot');
+    const btnBlinkToggle = document.getElementById('btnBlinkToggle');
+    const blinkPlayIcon = document.getElementById('blinkPlayIcon');
+    const blinkPlayText = document.getElementById('blinkPlayText');
+    const btnBlinkStep = document.getElementById('btnBlinkStep');
+    const blinkSpeedSlider = document.getElementById('blinkSpeedSlider');
+    const blinkSpeedLabel = document.getElementById('blinkSpeedLabel');
+    const btnSwitchToDiff = document.getElementById('btnSwitchToDiff');
+
+    const anomaliesTableBody = document.getElementById('anomaliesTableBody');
+    const tableAnomaliesBadge = document.getElementById('tableAnomaliesBadge');
+    const anomSearchInput = document.getElementById('anomSearchInput');
+
+    const combinedModal = document.getElementById('combinedModal');
+    const btnToggleCombinedModal = document.getElementById('btnToggleCombinedModal');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const imgCombinedModal = document.getElementById('imgCombinedModal');
+
+    // Utility: Show Toast Alert
+    function showAlert(msg, type = 'info') {
+      statusAlert.classList.remove('hidden', 'bg-red-950/80', 'border-red-700', 'text-red-200', 'bg-cyan-950/80', 'border-cyan-700', 'text-cyan-200', 'bg-emerald-950/80', 'border-emerald-700', 'text-emerald-200');
+      if (type === 'error') {
+        statusAlert.classList.add('bg-red-950/80', 'border-red-700', 'text-red-200');
+        statusIcon.textContent = '❌';
+      } else if (type === 'success') {
+        statusAlert.classList.add('bg-emerald-950/80', 'border-emerald-700', 'text-emerald-200');
+        statusIcon.textContent = '✅';
+      } else {
+        statusAlert.classList.add('bg-cyan-950/80', 'border-cyan-700', 'text-cyan-200');
+        statusIcon.textContent = '⚡';
+      }
+      statusMessage.textContent = msg;
+    }
+
+    // 1. Load Presets
+    async function loadPresets() {
+      try {
+        const res = await fetch('/api/presets');
+        const data = await res.json();
+        presets = data.presets || [];
+        presetSelect.innerHTML = '<option value="">-- Choose NASA Test Target --</option>';
+        presets.forEach((p, idx) => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.name} (${p.category})`;
+          presetSelect.appendChild(opt);
+        });
+
+        // Set WISE 0855 by default
+        if (presets.length > 0) {
+          presetSelect.value = presets[0].id;
+          applyPreset(presets[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load presets:', err);
+      }
+    }
+
+    function applyPreset(preset) {
+      if (!preset) return;
+      inputRA.value = preset.ra;
+      inputDec.value = preset.dec;
+      inputSize.value = preset.size || 0.05;
+      selectBandpass.value = preset.bandpass || 'SPHEREx-D2';
+      targetNameBadge.textContent = preset.name;
+      targetDescText.textContent = preset.description;
+    }
+
+    presetSelect.addEventListener('change', () => {
+      const selected = presets.find(p => p.id === presetSelect.value);
+      if (selected) {
+        applyPreset(selected);
+        // Automatically fetch epochs for this new preset
+        fetchEpochs();
+      }
+    });
+
+    // 2. Fetch Available Epochs
+    async function fetchEpochs() {
+      const ra = parseFloat(inputRA.value);
+      const dec = parseFloat(inputDec.value);
+      const size = parseFloat(inputSize.value);
+      const bandpass = selectBandpass.value;
+
+      if (isNaN(ra) || isNaN(dec)) {
+        showAlert('Please enter valid numerical RA and Dec values.', 'error');
+        return;
+      }
+
+      btnFetchEpochs.disabled = true;
+      fetchEpochsSpinner.classList.remove('hidden');
+      epochStatusText.textContent = 'Querying IRSA TAP...';
+      showAlert(`Querying TAP for ${bandpass} observations at (${ra.toFixed(4)}, ${dec.toFixed(4)})...`, 'info');
+
+      try {
+        const url = `/api/epochs?ra=${ra}&dec=${dec}&size=${size}&bandpass=${encodeURIComponent(bandpass)}`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || 'TAP query failed');
+        }
+        const data = await res.json();
+        currentEpochs = data.epochs || [];
+
+        epochCountBadge.textContent = `${currentEpochs.length} Epochs`;
+        epochStatusText.textContent = `Retrieved ${currentEpochs.length} observations`;
+        showAlert(`Successfully retrieved ${currentEpochs.length} observations from IRSA TAP.`, 'success');
+
+        populateEpochDropdowns();
+      } catch (err) {
+        showAlert(`TAP Query Error: ${err.message}`, 'error');
+        epochStatusText.textContent = 'Query failed';
+      } finally {
+        btnFetchEpochs.disabled = false;
+        fetchEpochsSpinner.classList.add('hidden');
+      }
+    }
+
+    function populateEpochDropdowns() {
+      selectEpoch1.innerHTML = '';
+      selectEpoch2.innerHTML = '';
+
+      if (currentEpochs.length === 0) {
+        selectEpoch1.innerHTML = '<option value="0">None available</option>';
+        selectEpoch2.innerHTML = '<option value="-1">None available</option>';
+        return;
+      }
+
+      currentEpochs.forEach((ep, idx) => {
+        const text = `#${idx} | ${ep.date_human} (${ep.obs_id})`;
+        
+        const opt1 = document.createElement('option');
+        opt1.value = idx;
+        opt1.textContent = text;
+        selectEpoch1.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = idx;
+        opt2.textContent = text;
+        selectEpoch2.appendChild(opt2);
+      });
+
+      // Default: Epoch 1 = index 0 (oldest), Epoch 2 = last index (newest)
+      selectEpoch1.value = 0;
+      selectEpoch2.value = currentEpochs.length - 1;
+    }
+
+    btnFetchEpochs.addEventListener('click', fetchEpochs);
+
+    // 3. Run Subtraction Pipeline
+    async function runSubtraction() {
+      const ra = parseFloat(inputRA.value);
+      const dec = parseFloat(inputDec.value);
+      const size = parseFloat(inputSize.value);
+      const bandpass = selectBandpass.value;
+      const epoch1Index = parseInt(selectEpoch1.value);
+      const epoch2Index = parseInt(selectEpoch2.value);
+
+      if (isNaN(ra) || isNaN(dec)) {
+        showAlert('Please provide valid RA and Dec coordinates.', 'error');
+        return;
+      }
+
+      btnRunSubtraction.disabled = true;
+      runSpinner.classList.remove('hidden');
+      runButtonText.textContent = 'Executing Pipeline (Align & Subtract)...';
+      showAlert('Downloading FITS cutouts, reprojecting celestial WCS grids, and calculating differences...', 'info');
+
+      try {
+        const payload = {
+          ra: ra,
+          dec: dec,
+          size: size,
+          bandpass: bandpass,
+          epoch1_index: isNaN(epoch1Index) ? 0 : epoch1Index,
+          epoch2_index: isNaN(epoch2Index) ? -1 : epoch2Index,
+          sigma_thresh: 3.0
+        };
+
+        const res = await fetch('/api/subtract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Subtraction failed');
+        }
+
+        subtractionResult = await res.json();
+        renderResults(subtractionResult);
+        showAlert(`Epoch subtraction complete! Detected ${subtractionResult.anomalies_count} anomalies.`, 'success');
+
+      } catch (err) {
+        showAlert(`Pipeline Error: ${err.message}`, 'error');
+      } finally {
+        btnRunSubtraction.disabled = false;
+        runSpinner.classList.add('hidden');
+        runButtonText.textContent = '🚀 Run Subtraction Pipeline';
+      }
+    }
+
+    btnRunSubtraction.addEventListener('click', runSubtraction);
+
+    // 4. Render Results
+    function renderResults(data) {
+      resultsSection.classList.remove('hidden');
+
+      // Stats
+      statDeltaDays.textContent = `${data.delta_days} days`;
+      statEpochDates.textContent = `${data.epoch1.date_human.slice(0, 10)} → ${data.epoch2.date_human.slice(0, 10)}`;
+      statAnomaliesCount.textContent = `${data.anomalies_count} Peaks`;
+      statStd.textContent = `${data.stats.std} MJy/sr`;
+      statGridShape.textContent = `${data.grid_shape[0]} × ${data.grid_shape[1]} px`;
+
+      // Images
+      imgEpoch1.src = data.images_base64.epoch1_png;
+      imgEpoch2.src = data.images_base64.epoch2_png;
+      imgDifference.src = data.images_base64.difference_png;
+      imgCombinedModal.src = data.images_base64.combined_png;
+
+      panelEpoch1Date.textContent = data.epoch1.date_human.slice(0, 19);
+      panelEpoch2Date.textContent = data.epoch2.date_human.slice(0, 19);
+
+      // Blink comparator images
+      blinkImg1.src = data.images_base64.epoch1_png;
+      blinkImg2.src = data.images_base64.epoch2_png;
+
+      // Start blinking automatically
+      startBlinking();
+
+      // Anomalies Table
+      renderAnomaliesTable(data.anomalies);
+
+      // Smooth scroll to results
+      resultsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 5. Blink Comparator Logic
+    function startBlinking() {
+      if (blinkIntervalId) clearInterval(blinkIntervalId);
+      isBlinking = true;
+      blinkPlayIcon.textContent = '⏸️';
+      blinkPlayText.textContent = 'Pause Blink';
+
+      blinkIntervalId = setInterval(() => {
+        stepBlink();
+      }, blinkSpeedMs);
+    }
+
+    function pauseBlinking() {
+      if (blinkIntervalId) clearInterval(blinkIntervalId);
+      blinkIntervalId = null;
+      isBlinking = false;
+      blinkPlayIcon.textContent = '▶️';
+      blinkPlayText.textContent = 'Play Blink';
+    }
+
+    function stepBlink() {
+      if (blinkCurrentFrame === 1) {
+        blinkCurrentFrame = 2;
+        blinkImg1.style.opacity = '0';
+        blinkImg2.style.opacity = '1';
+        blinkBadgeDot.className = 'w-2 h-2 rounded-full bg-indigo-400';
+        blinkBadgeText.className = 'text-indigo-300';
+        blinkBadgeText.textContent = `EPOCH 2 (${subtractionResult ? subtractionResult.epoch2.date_human.slice(0, 10) : 'Follow-up'})`;
+      } else {
+        blinkCurrentFrame = 1;
+        blinkImg1.style.opacity = '1';
+        blinkImg2.style.opacity = '0';
+        blinkBadgeDot.className = 'w-2 h-2 rounded-full bg-cyan-400';
+        blinkBadgeText.className = 'text-cyan-300';
+        blinkBadgeText.textContent = `EPOCH 1 (${subtractionResult ? subtractionResult.epoch1.date_human.slice(0, 10) : 'Baseline'})`;
+      }
+    }
+
+    btnBlinkToggle.addEventListener('click', () => {
+      if (isBlinking) {
+        pauseBlinking();
+      } else {
+        startBlinking();
+      }
+    });
+
+    btnBlinkStep.addEventListener('click', () => {
+      pauseBlinking();
+      stepBlink();
+    });
+
+    blinkSpeedSlider.addEventListener('input', (e) => {
+      blinkSpeedMs = parseInt(e.target.value);
+      blinkSpeedLabel.textContent = `${blinkSpeedMs} ms`;
+      if (isBlinking) {
+        startBlinking(); // Restart interval with new rate
+      }
+    });
+
+    let showingDiffInViewer = false;
+    btnSwitchToDiff.addEventListener('click', () => {
+      if (!subtractionResult) return;
+      showingDiffInViewer = !showingDiffInViewer;
+      if (showingDiffInViewer) {
+        pauseBlinking();
+        blinkImg1.src = subtractionResult.images_base64.difference_png;
+        blinkImg1.style.opacity = '1';
+        blinkImg2.style.opacity = '0';
+        blinkBadgeDot.className = 'w-2 h-2 rounded-full bg-rose-400';
+        blinkBadgeText.className = 'text-rose-300';
+        blinkBadgeText.textContent = 'DIFFERENCE MAP (Epoch 2 − Epoch 1)';
+        btnSwitchToDiff.textContent = 'Switch back to Blink Comparator';
+      } else {
+        blinkImg1.src = subtractionResult.images_base64.epoch1_png;
+        blinkImg2.src = subtractionResult.images_base64.epoch2_png;
+        btnSwitchToDiff.textContent = 'Show Difference Map in Viewer';
+        startBlinking();
+      }
+    });
+
+    // 6. Anomalies Table Rendering
+    function renderAnomaliesTable(anomalies) {
+      tableAnomaliesBadge.textContent = `${anomalies.length} candidates`;
+      anomaliesTableBody.innerHTML = '';
+
+      if (!anomalies || anomalies.length === 0) {
+        anomaliesTableBody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500">No significant statistical anomalies detected above threshold.</td></tr>';
+        return;
+      }
+
+      anomalies.forEach((anom, idx) => {
+        const isPos = anom.type.includes('Positive');
+        const badgeColor = isPos 
+          ? 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60' 
+          : 'bg-rose-950/80 text-rose-300 border-rose-700/60';
+        const snrColor = isPos ? 'text-cyan-400' : 'text-neon-pink';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-space-850/60 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3.5 font-bold text-slate-400">#${idx + 1}</td>
+          <td class="py-2.5 px-3.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${badgeColor}">
+              ${isPos ? '▲' : '▼'} ${anom.type}
+            </span>
+          </td>
+          <td class="py-2.5 px-3.5 font-bold ${snrColor}">${anom.snr > 0 ? '+' : ''}${anom.snr.toFixed(2)}σ</td>
+          <td class="py-2.5 px-3.5 text-slate-300">${anom.flux_diff > 0 ? '+' : ''}${anom.flux_diff.toFixed(5)}</td>
+          <td class="py-2.5 px-3.5 text-cyan-200">${anom.ra.toFixed(6)}°</td>
+          <td class="py-2.5 px-3.5 text-indigo-200">${anom.dec.toFixed(6)}°</td>
+          <td class="py-2.5 px-3.5 text-slate-400">(${anom.pixel_x}, ${anom.pixel_y})</td>
+        `;
+        anomaliesTableBody.appendChild(tr);
+      });
+    }
+
+    // Filter table by search
+    anomSearchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      if (!subtractionResult) return;
+      const filtered = subtractionResult.anomalies.filter(a => 
+        a.type.toLowerCase().includes(q) || 
+        a.snr.toString().includes(q) ||
+        a.ra.toString().includes(q) ||
+        a.dec.toString().includes(q)
+      );
+      renderAnomaliesTable(filtered);
+    });
+
+    // 7. Combined Modal View
+    btnToggleCombinedModal.addEventListener('click', () => {
+      combinedModal.classList.remove('hidden');
+    });
+    btnCloseModal.addEventListener('click', () => {
+      combinedModal.classList.add('hidden');
+    });
+    combinedModal.addEventListener('click', (e) => {
+      if (e.target === combinedModal) combinedModal.classList.add('hidden');
+    });
+
+    // Initial boot
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadPresets();
+      // Auto-query epochs for initial target
+      fetchEpochs();
+    });
+  </script>
+</body>
+</html>
