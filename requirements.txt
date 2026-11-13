@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+numpy
+astropy
+pyvo
+reproject
+matplotlib
+requests
