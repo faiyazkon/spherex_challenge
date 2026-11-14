@@ -205,7 +205,50 @@ def download_fits_to_cache(url, timeout=60):
     raise RuntimeError(f"Could not download FITS from {url}: {last_exc}")
 
 
-def load_and_clean_cutout(fits_url_or_path):
+# Spectral collapse modes (mid preserves legacy Faiyaz behavior)
+VALID_COLLAPSE_MODES = frozenset({"mid", "sum", "median", "detector"})
+# FLAGS: bit 21 = SOURCE, bit 1 = benign — must NOT be masked
+_FLAG_KEEP = 2097152 | 2  # 2097154
+
+
+def collapse_cube(cube, mode="mid"):
+    """Collapse a spectral cube [wave, y, x] → 2-D spatial image."""
+    data = np.asarray(cube, dtype=np.float64)
+    if data.ndim == 2:
+        return data
+    if data.ndim != 3:
+        raise ValueError(f"Expected 2D or 3D array, got shape {data.shape}")
+    mode = mode if mode in VALID_COLLAPSE_MODES else "mid"
+    if mode == "mid":
+        return data[data.shape[0] // 2]
+    if mode == "median":
+        return np.nanmedian(data, axis=0)
+    if mode == "detector":
+        n = data.shape[0]
+        groups = np.array_split(np.arange(n), 6)
+        stacks = [np.nansum(data[g], axis=0) for g in groups if len(g)]
+        if not stacks:
+            return np.nansum(data, axis=0)
+        return np.nanmean(np.stack(stacks, axis=0), axis=0)
+    # sum / nansum
+    return np.nansum(data, axis=0)
+
+
+def smart_flag_mask(flags, mode="mid"):
+    """True where pixels are bad glitches (exclude SOURCE + benign bits)."""
+    if flags is None:
+        return None
+    f2 = np.asarray(flags)
+    bad = (f2.astype(np.int64) & ~_FLAG_KEEP) != 0
+    if f2.ndim == 3:
+        if mode == "mid":
+            return bad[bad.shape[0] // 2]
+        # Any wavelength plane with a true glitch → mask spatial pixel
+        return np.any(bad, axis=0)
+    return bad
+
+
+def load_and_clean_cutout(fits_url_or_path, collapse_mode="mid"):
     """
     Download a SPHEREx MEF cutout/image, subtract the zodiacal background,
     and mask bad glitch pixels.
@@ -219,6 +262,8 @@ def load_and_clean_cutout(fits_url_or_path):
     ----------
     fits_url_or_path : str
         Direct URL or local filepath to the FITS file.
+    collapse_mode : str
+        How to reduce spectral cubes: mid | sum | median | detector.
 
     Returns
     -------
@@ -228,7 +273,11 @@ def load_and_clean_cutout(fits_url_or_path):
         2-D celestial WCS parsed from the IMAGE header.
     header : astropy.io.fits.Header
         The IMAGE extension header.
+    meta : dict
+        Collapse metadata (n_bands, collapse_mode).
     """
+    mode = collapse_mode if collapse_mode in VALID_COLLAPSE_MODES else "mid"
+
     if str(fits_url_or_path).startswith("http://") or str(fits_url_or_path).startswith("https://"):
         local_path = download_fits_to_cache(str(fits_url_or_path))
     else:
@@ -237,40 +286,43 @@ def load_and_clean_cutout(fits_url_or_path):
     with fits.open(str(local_path), memmap=False) as hdulist:
         image_data = hdulist["IMAGE"].data.astype(np.float64)
         image_header = hdulist["IMAGE"].header
-
-        if image_data.ndim == 3:
-            mid = image_data.shape[0] // 2
-            image_data = image_data[mid]
+        n_bands = int(image_data.shape[0]) if image_data.ndim == 3 else 1
 
         zodi_data = hdulist["ZODI"].data.astype(np.float64)
-        if zodi_data.ndim == 3:
-            mid = zodi_data.shape[0] // 2
-            zodi_data = zodi_data[mid]
-
         flags_data = hdulist["FLAGS"].data
-        if flags_data.ndim == 3:
-            mid = flags_data.shape[0] // 2
-            flags_data = flags_data[mid]
+
+        # Align ZODI to IMAGE shape, then collapse both with the same mode
+        if zodi_data.shape == image_data.shape:
+            cleaned_full = image_data - zodi_data
+        elif image_data.ndim == 3 and zodi_data.ndim == 2 and zodi_data.shape == image_data.shape[1:]:
+            cleaned_full = image_data - zodi_data[np.newaxis, :, :]
+        elif image_data.ndim == 2 and zodi_data.ndim == 3:
+            cleaned_full = image_data - collapse_cube(zodi_data, mode)
+        else:
+            img2 = collapse_cube(image_data, mode)
+            zodi2 = collapse_cube(zodi_data, mode)
+            if zodi2.shape != img2.shape:
+                img2 = collapse_cube(image_data, "mid")
+                zodi2 = collapse_cube(zodi_data, "mid")
+            cleaned_full = img2 - zodi2
+
+        cleaned = collapse_cube(cleaned_full, mode) if cleaned_full.ndim == 3 else cleaned_full
+        bad = smart_flag_mask(flags_data, mode=mode)
+        if bad is not None and bad.shape == cleaned.shape:
+            cleaned = cleaned.copy()
+            cleaned[bad] = np.nan
 
         wcs = WCS(image_header, naxis=2)
+        meta = {"n_bands": n_bands, "collapse_mode": mode}
 
-        # Subtract zodiacal background
-        cleaned = image_data - zodi_data
-
-        # Mask ONLY true glitch pixels:
-        # bit 21 (2097152) = SOURCE, bit 1 (2) = benign
-        EXCLUDE_MASK = 2097152 | 2  # 2097154
-        bad = (flags_data.astype(np.int64) & ~EXCLUDE_MASK) != 0
-        cleaned[bad] = np.nan
-
-    return cleaned, wcs, image_header
+    return cleaned, wcs, image_header, meta
 
 
 # ---------------------------------------------------------------------------
 # 3. Subtract two epochs (epoch2 − epoch1) after reprojection
 # ---------------------------------------------------------------------------
 
-def subtract_epochs(url_epoch1, url_epoch2):
+def subtract_epochs(url_epoch1, url_epoch2, collapse_mode="mid"):
     """
     Load two SPHEREx FITS cutouts, reproject Epoch 2 onto Epoch 1's WCS grid,
     and compute difference = epoch2_aligned − epoch1.
@@ -281,9 +333,10 @@ def subtract_epochs(url_epoch1, url_epoch2):
     epoch2_aligned : numpy.ndarray
     difference : numpy.ndarray
     wcs1 : astropy.wcs.WCS
+    meta : dict
     """
-    epoch1, wcs1, header1 = load_and_clean_cutout(url_epoch1)
-    epoch2, wcs2, header2 = load_and_clean_cutout(url_epoch2)
+    epoch1, wcs1, header1, meta1 = load_and_clean_cutout(url_epoch1, collapse_mode=collapse_mode)
+    epoch2, wcs2, header2, meta2 = load_and_clean_cutout(url_epoch2, collapse_mode=collapse_mode)
 
     # Reproject Epoch 2 onto Epoch 1's celestial grid
     epoch2_aligned, footprint = reproject_interp(
@@ -295,7 +348,12 @@ def subtract_epochs(url_epoch1, url_epoch2):
     epoch2_aligned[footprint == 0] = np.nan
     difference = epoch2_aligned - epoch1
 
-    return epoch1, epoch2_aligned, difference, wcs1
+    meta = {
+        "collapse_mode": collapse_mode,
+        "n_bands_epoch1": meta1.get("n_bands", 1),
+        "n_bands_epoch2": meta2.get("n_bands", 1),
+    }
+    return epoch1, epoch2_aligned, difference, wcs1, meta
 
 
 # ---------------------------------------------------------------------------

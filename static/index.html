@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SPHEREx Temporal Subtraction & Anomaly Workstation</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,72 +30,45 @@
     }
   </script>
   <style>
-    body {
-      background-color: #08080a;
-      color: #e4e4e7;
-    }
-    /* Subtle grid line overlay */
+    body { background-color: #08080a; color: #e4e4e7; }
     .bg-grid {
       background-size: 32px 32px;
-      background-image: 
+      background-image:
         linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     }
-    /* Clean custom scrollbar */
-    ::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0c0c0e;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #27272a;
-      border-radius: 2px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #3f3f46;
-    }
-    /* Crosshair overlay in blink comparator */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0c0c0e; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
     .crosshair-line-h {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 50%;
-      height: 1px;
-      background: rgba(245, 158, 11, 0.4);
-      pointer-events: none;
+      position: absolute; left: 0; right: 0; top: 50%; height: 1px;
+      background: rgba(245, 158, 11, 0.4); pointer-events: none;
     }
     .crosshair-line-v {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 1px;
-      background: rgba(245, 158, 11, 0.4);
-      pointer-events: none;
+      position: absolute; top: 0; bottom: 0; left: 50%; width: 1px;
+      background: rgba(245, 158, 11, 0.4); pointer-events: none;
     }
+    #aladin-lite-div { width: 100%; height: 100%; min-height: 420px; }
+    .filmstrip-dot {
+      width: 10px; height: 10px; border-radius: 9999px;
+      background: #3f3f46; border: 1px solid #52525b; cursor: pointer;
+    }
+    .filmstrip-dot.active { background: #f59e0b; border-color: #fbbf24; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased bg-grid select-none">
 
-  <!-- Top Global Navigation -->
   <header class="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-[1720px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-      
-      <!-- Brand & Mission Info -->
       <div class="flex items-center space-x-3.5">
-        <div class="w-7 h-7 rounded border border-zinc-700 bg-zinc-900 flex items-center justify-center font-mono font-bold text-xs text-amber-500">
-          SPX
-        </div>
+        <div class="w-7 h-7 rounded border border-zinc-700 bg-zinc-900 flex items-center justify-center font-mono font-bold text-xs text-amber-500">SPX</div>
         <div class="flex items-center space-x-2.5">
           <span class="text-sm font-semibold tracking-tight text-zinc-100">SPHEREx</span>
           <span class="text-zinc-600">/</span>
           <span class="text-xs font-mono text-zinc-400">Temporal Subtraction & Anomaly Engine</span>
         </div>
       </div>
-
-      <!-- Telemetry Pills -->
       <div class="flex items-center space-x-3 text-xs font-mono">
         <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-zinc-800 bg-zinc-900/80 text-zinc-300">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -112,24 +84,19 @@
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
         </a>
       </div>
-
     </div>
   </header>
 
-  <!-- Workspace Shell -->
   <div class="flex-1 flex flex-col lg:flex-row max-w-[1720px] w-full mx-auto p-4 sm:p-5 gap-5">
-    
-    <!-- LEFT RAIL: Precision Control Console (340px) -->
+
     <aside class="w-full lg:w-[350px] shrink-0 space-y-4">
-      
-      <!-- Target Configuration Box -->
+
       <div class="rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 space-y-3.5">
         <div class="flex items-center justify-between border-b border-zinc-800 pb-2.5">
           <span class="text-xs font-semibold text-zinc-200 tracking-wide">Target Parameters</span>
           <span class="text-[10px] font-mono text-zinc-500 uppercase">Aperture Setup</span>
         </div>
 
-        <!-- Preset Target Selector -->
         <div>
           <label class="block text-[11px] font-mono text-zinc-400 mb-1">NASA Science Target Preset</label>
           <select id="presetSelect" class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 font-medium focus:border-zinc-600 focus:outline-none transition">
@@ -137,30 +104,38 @@
           </select>
         </div>
 
-        <!-- Coordinates Inputs (RA / Dec) -->
+        <div>
+          <label class="block text-[10px] font-mono text-zinc-400 mb-1">Object Name</label>
+          <div class="flex gap-2">
+            <input type="text" id="inputObjectName" placeholder="Barnard's Star"
+              class="flex-1 bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-100 focus:border-zinc-600 focus:outline-none">
+            <button id="btnResolveName" type="button"
+              class="px-2.5 py-1.5 rounded border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-[11px] font-mono text-zinc-200 transition">Resolve</button>
+          </div>
+        </div>
+
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label class="block text-[10px] font-mono text-zinc-400 mb-1">Right Ascension (deg)</label>
-            <input type="number" step="any" id="inputRA" value="133.795129" 
+            <input type="number" step="any" id="inputRA" value="133.795129"
               class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-100 focus:border-zinc-600 focus:outline-none">
           </div>
           <div>
             <label class="block text-[10px] font-mono text-zinc-400 mb-1">Declination (deg)</label>
-            <input type="number" step="any" id="inputDec" value="-7.245147" 
+            <input type="number" step="any" id="inputDec" value="-7.245147"
               class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-100 focus:border-zinc-600 focus:outline-none">
           </div>
         </div>
 
-        <!-- Cutout Size & Bandpass -->
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label class="block text-[10px] font-mono text-zinc-400 mb-1">FOV Radius (deg)</label>
-            <input type="number" step="0.01" min="0.01" max="0.5" id="inputSize" value="0.05" 
+            <input type="number" step="0.01" min="0.01" max="0.5" id="inputSize" value="0.05"
               class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-100 focus:border-zinc-600 focus:outline-none">
           </div>
           <div>
             <label class="block text-[10px] font-mono text-zinc-400 mb-1">Spectral Bandpass</label>
-            <select id="selectBandpass" 
+            <select id="selectBandpass"
               class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-200 focus:border-zinc-600 focus:outline-none">
               <option value="SPHEREx-D1">D1 (0.75-1.11 μm)</option>
               <option value="SPHEREx-D2" selected>D2 (1.11-1.64 μm)</option>
@@ -172,7 +147,17 @@
           </div>
         </div>
 
-        <!-- Target Description Note -->
+        <div>
+          <label class="block text-[10px] font-mono text-zinc-400 mb-1">Collapse Mode</label>
+          <select id="selectCollapse"
+            class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-200 focus:border-zinc-600 focus:outline-none">
+            <option value="mid" selected>mid-slice (legacy)</option>
+            <option value="sum">nansum</option>
+            <option value="median">median</option>
+            <option value="detector">per-detector stack</option>
+          </select>
+        </div>
+
         <div class="p-2.5 rounded bg-zinc-925 border border-zinc-800/80 text-[11px] space-y-1">
           <div class="flex items-center justify-between">
             <span id="targetNameBadge" class="font-semibold text-zinc-200">WISE 0855−0714</span>
@@ -184,7 +169,6 @@
         </div>
       </div>
 
-      <!-- Temporal Epochs Selection Box -->
       <div class="rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 space-y-3.5">
         <div class="flex items-center justify-between border-b border-zinc-800 pb-2.5">
           <span class="text-xs font-semibold text-zinc-200 tracking-wide">Temporal Epochs</span>
@@ -202,7 +186,6 @@
         </div>
 
         <div class="space-y-2.5">
-          <!-- Epoch 1 Dropdown -->
           <div>
             <div class="flex items-center justify-between mb-1">
               <label class="text-[10px] font-mono text-zinc-400 uppercase">Epoch 1 (Baseline Reference)</label>
@@ -212,8 +195,6 @@
               <option value="0">Default: Oldest Available Epoch</option>
             </select>
           </div>
-
-          <!-- Epoch 2 Dropdown -->
           <div>
             <div class="flex items-center justify-between mb-1">
               <label class="text-[10px] font-mono text-zinc-400 uppercase">Epoch 2 (Follow-up Observation)</label>
@@ -223,22 +204,28 @@
               <option value="-1">Default: Newest Available Epoch</option>
             </select>
           </div>
+          <div id="maxFramesWrap">
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[10px] font-mono text-zinc-400 uppercase">Max Timeline Frames</label>
+              <span class="text-[9px] font-mono text-zinc-500">Blink Timeline</span>
+            </div>
+            <input type="number" id="inputMaxFrames" min="2" max="12" value="8"
+              class="w-full bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-zinc-100 focus:border-zinc-600 focus:outline-none">
+          </div>
         </div>
 
-        <!-- Detection Cutoff Threshold -->
         <div class="pt-1">
           <div class="flex items-center justify-between text-[10px] font-mono mb-1">
             <span class="text-zinc-400 uppercase">Detection Cutoff (SNR σ)</span>
             <span id="snrCutoffLabel" class="text-zinc-200 font-semibold">3.0 σ</span>
           </div>
-          <input type="range" id="inputSigma" min="2.0" max="8.0" step="0.5" value="3.0" 
+          <input type="range" id="inputSigma" min="2.0" max="8.0" step="0.5" value="3.0"
             class="w-full accent-amber-500 cursor-pointer h-1.5 bg-zinc-800 rounded-lg">
         </div>
       </div>
 
-      <!-- Action Button -->
       <div>
-        <button id="btnRunSubtraction" 
+        <button id="btnRunSubtraction"
           class="w-full py-2.5 px-4 rounded-md font-medium text-xs font-mono tracking-wide bg-zinc-100 hover:bg-white text-zinc-950 transition duration-150 flex items-center justify-center space-x-2 border border-zinc-200 shadow-sm">
           <span id="runSpinner" class="hidden">
             <svg class="animate-spin w-3.5 h-3.5 text-zinc-950" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
@@ -247,36 +234,24 @@
         </button>
       </div>
 
-      <!-- Toast Alert Box -->
       <div id="statusAlert" class="hidden p-3 rounded border text-xs font-mono flex items-start justify-between">
         <div class="flex items-start space-x-2">
           <span id="statusMessage">Processing pipeline...</span>
         </div>
         <button onclick="document.getElementById('statusAlert').classList.add('hidden')" class="text-zinc-400 hover:text-zinc-100">&times;</button>
       </div>
-
     </aside>
 
-    <!-- RIGHT CANVAS: Scientific Workspace (flex-1) -->
     <main class="flex-1 flex flex-col space-y-4 min-w-0">
-      
-      <!-- Top Workspace Toolbar -->
+
       <div class="rounded-lg border border-zinc-800 bg-zinc-900/90 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
-        
-        <!-- View Mode Segmented Switcher -->
         <div class="flex items-center space-x-1 p-0.5 rounded border border-zinc-800 bg-zinc-925 text-xs font-mono">
-          <button id="tab3Panel" class="px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition">
-            3-Panel Array
-          </button>
-          <button id="tabBlink" class="px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition">
-            Blink Comparator
-          </button>
-          <button id="tabDifference" class="px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition">
-            Difference Map
-          </button>
+          <button id="tab3Panel" class="px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition">3-Panel Array</button>
+          <button id="tabBlink" class="px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition">Blink Comparator</button>
+          <button id="tabDifference" class="px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition">Difference Map</button>
+          <button id="tabSky" class="px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition">Sky Context</button>
         </div>
 
-        <!-- Metric Summary Chips -->
         <div class="flex items-center space-x-3 text-xs font-mono">
           <div class="flex items-center space-x-1.5 text-zinc-400">
             <span>Δt:</span>
@@ -294,6 +269,11 @@
           </div>
           <span class="text-zinc-700">|</span>
           <div class="flex items-center space-x-1.5 text-zinc-400">
+            <span>Collapse:</span>
+            <span id="statCollapse" class="text-zinc-200 font-semibold">mid</span>
+          </div>
+          <span class="text-zinc-700">|</span>
+          <div class="flex items-center space-x-1.5 text-zinc-400">
             <span>Anomalies:</span>
             <span id="statAnomaliesCount" class="text-emerald-400 font-semibold">0</span>
           </div>
@@ -301,16 +281,11 @@
             Combined Plot ↗
           </button>
         </div>
-
       </div>
 
-      <!-- MAIN VIEWPORT CONTAINER -->
       <div id="viewportContainer" class="flex-1 rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 min-h-[460px] flex flex-col justify-between">
-        
-        <!-- View 1: 3-Panel Astronomical Array -->
+
         <div id="view3Panel" class="grid grid-cols-1 md:grid-cols-3 gap-3.5 flex-1">
-          
-          <!-- Epoch 1 Panel -->
           <div class="flex flex-col rounded border border-zinc-800 bg-zinc-950 p-3">
             <div class="flex items-center justify-between text-xs font-mono mb-2">
               <span class="font-medium text-zinc-300">Epoch 1 (Baseline)</span>
@@ -322,8 +297,6 @@
             </div>
             <div class="text-[10px] font-mono text-zinc-500 mt-2 text-right">ZODI-Subtracted Flux (MJy/sr)</div>
           </div>
-
-          <!-- Epoch 2 Panel -->
           <div class="flex flex-col rounded border border-zinc-800 bg-zinc-950 p-3">
             <div class="flex items-center justify-between text-xs font-mono mb-2">
               <span class="font-medium text-zinc-300">Epoch 2 (WCS Aligned)</span>
@@ -335,8 +308,6 @@
             </div>
             <div class="text-[10px] font-mono text-zinc-500 mt-2 text-right">Reprojected Grid (MJy/sr)</div>
           </div>
-
-          <!-- Difference Panel -->
           <div class="flex flex-col rounded border border-zinc-800 bg-zinc-950 p-3">
             <div class="flex items-center justify-between text-xs font-mono mb-2">
               <span class="font-medium text-zinc-300">Difference (Epoch 2 − Epoch 1)</span>
@@ -348,56 +319,56 @@
             </div>
             <div class="text-[10px] font-mono text-zinc-500 mt-2 text-right">Positive (Green) / Negative (Red)</div>
           </div>
-
         </div>
 
-        <!-- View 2: High-Precision Blink Comparator (Hidden by default) -->
         <div id="viewBlink" class="hidden flex-1 flex flex-col md:flex-row gap-4 items-center justify-center">
-          
-          <!-- Blink Canvas Area -->
-          <div class="relative w-full max-w-xl aspect-square bg-black rounded border border-zinc-800 flex items-center justify-center overflow-hidden">
-            <img id="blinkImg1" src="" alt="Frame 1" class="absolute inset-0 w-full h-full object-contain opacity-100 transition-opacity duration-75">
-            <img id="blinkImg2" src="" alt="Frame 2" class="absolute inset-0 w-full h-full object-contain opacity-0 transition-opacity duration-75">
-            
-            <!-- Crosshairs overlay -->
-            <div id="crosshairH" class="crosshair-line-h hidden"></div>
-            <div id="crosshairV" class="crosshair-line-v hidden"></div>
-
-            <!-- Active Frame Pill -->
-            <div class="absolute top-3 left-3 px-2.5 py-1 rounded bg-zinc-950/80 border border-zinc-800 text-[11px] font-mono font-medium flex items-center space-x-2 backdrop-blur">
-              <span id="blinkIndicatorDot" class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
-              <span id="blinkIndicatorText" class="text-zinc-200">EPOCH 1 (Baseline)</span>
+          <div class="w-full max-w-xl space-y-3">
+            <div class="relative w-full aspect-square bg-black rounded border border-zinc-800 flex items-center justify-center overflow-hidden">
+              <img id="blinkImg1" src="" alt="Frame 1" class="absolute inset-0 w-full h-full object-contain opacity-100 transition-opacity duration-75">
+              <img id="blinkImg2" src="" alt="Frame 2" class="absolute inset-0 w-full h-full object-contain opacity-0 transition-opacity duration-75">
+              <img id="blinkTimelineImg" src="" alt="Timeline" class="absolute inset-0 w-full h-full object-contain hidden">
+              <div id="crosshairH" class="crosshair-line-h hidden"></div>
+              <div id="crosshairV" class="crosshair-line-v hidden"></div>
+              <div class="absolute top-3 left-3 px-2.5 py-1 rounded bg-zinc-950/80 border border-zinc-800 text-[11px] font-mono font-medium flex items-center space-x-2 backdrop-blur">
+                <span id="blinkIndicatorDot" class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+                <span id="blinkIndicatorText" class="text-zinc-200">EPOCH 1 (Baseline)</span>
+              </div>
             </div>
+            <div id="filmstrip" class="hidden flex items-center justify-center gap-2 flex-wrap px-2"></div>
           </div>
 
-          <!-- Blink Control Console -->
           <div class="w-full md:w-64 space-y-4 p-4 rounded border border-zinc-800 bg-zinc-950 text-xs font-mono">
             <div class="border-b border-zinc-800 pb-2">
               <span class="font-semibold text-zinc-200">Comparator Controls</span>
             </div>
 
-            <!-- Play / Step Controls -->
+            <div class="flex items-center space-x-1 p-0.5 rounded border border-zinc-800 bg-zinc-925">
+              <button id="btnBlinkPair" type="button" class="flex-1 py-1 rounded bg-zinc-800 text-zinc-100 font-medium">Pair</button>
+              <button id="btnBlinkTimeline" type="button" class="flex-1 py-1 rounded text-zinc-400 hover:text-zinc-200">Timeline</button>
+            </div>
+
+            <button id="btnLoadTimeline" type="button"
+              class="hidden w-full py-1.5 px-3 rounded border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 transition">
+              Load Timeline Frames
+            </button>
+
             <div class="flex items-center space-x-2">
               <button id="btnBlinkToggle" class="flex-1 py-1.5 px-3 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium transition flex items-center justify-center space-x-1.5">
                 <span id="blinkIcon">⏸</span>
                 <span id="blinkText">Pause</span>
               </button>
-              <button id="btnBlinkStep" class="py-1.5 px-3 rounded border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition">
-                Step ⏭
-              </button>
+              <button id="btnBlinkStep" class="py-1.5 px-3 rounded border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition">Step ⏭</button>
             </div>
 
-            <!-- Frame Speed Slider -->
             <div class="space-y-1">
               <div class="flex items-center justify-between text-[10px] text-zinc-400">
                 <span>Blink Interval</span>
                 <span id="blinkRateLabel" class="text-zinc-200 font-semibold">400 ms</span>
               </div>
-              <input type="range" id="blinkSlider" min="100" max="1000" step="50" value="400" 
+              <input type="range" id="blinkSlider" min="100" max="1000" step="50" value="400"
                 class="w-full accent-amber-500 cursor-pointer h-1.5 bg-zinc-800 rounded">
             </div>
 
-            <!-- Crosshair Toggle -->
             <div class="pt-2 border-t border-zinc-800">
               <label class="flex items-center space-x-2 text-[11px] text-zinc-300 cursor-pointer">
                 <input type="checkbox" id="checkCrosshairs" class="accent-amber-500 rounded">
@@ -405,35 +376,43 @@
               </label>
             </div>
 
-            <!-- Info Guide -->
             <div class="pt-2 border-t border-zinc-800 text-[10px] text-zinc-500 space-y-1 leading-normal">
-              <div><strong class="text-zinc-300">Moving Source:</strong> Alternate frame shift indicates proper motion displacement.</div>
-              <div><strong class="text-zinc-300">Variable Star:</strong> Static position with pulsating flux intensity.</div>
+              <div><strong class="text-zinc-300">Pair:</strong> Blink Epoch 1 ↔ Epoch 2 after subtraction.</div>
+              <div><strong class="text-zinc-300">Timeline:</strong> Multi-epoch flipbook across the archive.</div>
             </div>
           </div>
-
         </div>
 
-        <!-- View 3: Single Difference Map View (Hidden by default) -->
         <div id="viewDifference" class="hidden flex-1 flex items-center justify-center">
           <div class="w-full max-w-2xl aspect-square bg-black rounded border border-zinc-800 p-2 flex items-center justify-center">
             <img id="imgDiffLarge" src="" alt="Difference Map" class="max-w-full max-h-full object-contain">
           </div>
         </div>
 
+        <div id="viewSky" class="hidden flex-1 flex flex-col gap-3 min-h-[460px]">
+          <div class="flex flex-wrap items-center gap-3 text-xs font-mono">
+            <label class="flex items-center gap-2 text-zinc-300 cursor-pointer">
+              <input type="checkbox" id="checkGaia" class="accent-amber-500"> Gaia DR3
+            </label>
+            <label class="flex items-center gap-2 text-zinc-300 cursor-pointer">
+              <input type="checkbox" id="checkWise" class="accent-amber-500"> WISE / AllWISE
+            </label>
+            <span id="skyStatus" class="text-zinc-500">Sky map idle</span>
+          </div>
+          <div class="flex-1 rounded border border-zinc-800 bg-black overflow-hidden min-h-[420px]">
+            <div id="aladin-lite-div"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- DISCOVERIES DRAWER / TABLE -->
       <div class="rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-2.5">
           <div class="flex items-center space-x-2">
             <span class="text-xs font-semibold text-zinc-200 tracking-wide">Candidate Discoveries</span>
             <span id="anomTableBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">0 Candidates</span>
           </div>
-
-          <!-- Table Search & Filter -->
           <div class="flex items-center space-x-2 text-xs font-mono">
-            <input type="text" id="tableFilterInput" placeholder="Filter candidates..." 
+            <input type="text" id="tableFilterInput" placeholder="Filter candidates..."
               class="bg-zinc-925 border border-zinc-800 rounded px-2.5 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-600">
             <button id="btnExportCSV" class="px-2.5 py-1 rounded border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-xs transition">
               Export CSV
@@ -441,7 +420,6 @@
           </div>
         </div>
 
-        <!-- Dense Data Table -->
         <div class="overflow-x-auto rounded border border-zinc-800">
           <table class="w-full text-left text-xs font-mono">
             <thead class="bg-zinc-925 text-zinc-400 border-b border-zinc-800 text-[11px]">
@@ -465,12 +443,9 @@
           </table>
         </div>
       </div>
-
     </main>
-
   </div>
 
-  <!-- Combined High-Resolution Modal -->
   <div id="modalCombined" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-zinc-900 border border-zinc-800 rounded-lg max-w-6xl w-full p-4 space-y-3 shadow-2xl">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-2 text-xs font-mono">
@@ -483,9 +458,16 @@
     </div>
   </div>
 
-  <!-- Client-Side Architecture -->
+  <script type="module">
+    import A from "/static/vendor/aladin.js";
+    window.A = A;
+    window.dispatchEvent(new Event("aladin-ready"));
+  </script>
+
   <script>
-    // State
+    const HIPS_DSS = "https://irsa.ipac.caltech.edu/data/hips/CDS/DSS2/color";
+    const HIPS_WISE = "https://skies.esac.esa.int/AllWISEColor";
+
     let presets = [];
     let currentEpochs = [];
     let resultData = null;
@@ -493,342 +475,499 @@
     let blinkFrame = 1;
     let blinkSpeed = 400;
     let isBlinking = false;
+    let blinkMode = "pair"; // pair | timeline
+    let timelineFrames = [];
+    let timelineIdx = 0;
+    let currentView = "3panel";
+    let aladin = null;
+    let gaiaCat = null;
+    let anomalyOverlay = null;
+    let suppressingUrl = false;
+    let bootFromUrl = false;
 
-    // Element References
-    const presetSelect = document.getElementById('presetSelect');
-    const inputRA = document.getElementById('inputRA');
-    const inputDec = document.getElementById('inputDec');
-    const inputSize = document.getElementById('inputSize');
-    const selectBandpass = document.getElementById('selectBandpass');
-    const targetNameBadge = document.getElementById('targetNameBadge');
-    const targetDescText = document.getElementById('targetDescText');
+    const $ = (id) => document.getElementById(id);
 
-    const btnFetchEpochs = document.getElementById('btnFetchEpochs');
-    const fetchEpochsSpinner = document.getElementById('fetchEpochsSpinner');
-    const epochCountBadge = document.getElementById('epochCountBadge');
-    const epochStatusText = document.getElementById('epochStatusText');
-    const selectEpoch1 = document.getElementById('selectEpoch1');
-    const selectEpoch2 = document.getElementById('selectEpoch2');
-    const inputSigma = document.getElementById('inputSigma');
-    const snrCutoffLabel = document.getElementById('snrCutoffLabel');
+    const presetSelect = $("presetSelect");
+    const inputObjectName = $("inputObjectName");
+    const btnResolveName = $("btnResolveName");
+    const inputRA = $("inputRA");
+    const inputDec = $("inputDec");
+    const inputSize = $("inputSize");
+    const selectBandpass = $("selectBandpass");
+    const selectCollapse = $("selectCollapse");
+    const inputMaxFrames = $("inputMaxFrames");
+    const targetNameBadge = $("targetNameBadge");
+    const targetDescText = $("targetDescText");
+    const btnFetchEpochs = $("btnFetchEpochs");
+    const fetchEpochsSpinner = $("fetchEpochsSpinner");
+    const epochCountBadge = $("epochCountBadge");
+    const epochStatusText = $("epochStatusText");
+    const selectEpoch1 = $("selectEpoch1");
+    const selectEpoch2 = $("selectEpoch2");
+    const inputSigma = $("inputSigma");
+    const snrCutoffLabel = $("snrCutoffLabel");
+    const btnRunSubtraction = $("btnRunSubtraction");
+    const runSpinner = $("runSpinner");
+    const runButtonText = $("runButtonText");
+    const statusAlert = $("statusAlert");
+    const statusMessage = $("statusMessage");
+    const statDeltaDays = $("statDeltaDays");
+    const statStd = $("statStd");
+    const statGridShape = $("statGridShape");
+    const statCollapse = $("statCollapse");
+    const statAnomaliesCount = $("statAnomaliesCount");
+    const tab3Panel = $("tab3Panel");
+    const tabBlink = $("tabBlink");
+    const tabDifference = $("tabDifference");
+    const tabSky = $("tabSky");
+    const view3Panel = $("view3Panel");
+    const viewBlink = $("viewBlink");
+    const viewDifference = $("viewDifference");
+    const viewSky = $("viewSky");
+    const imgEpoch1 = $("imgEpoch1");
+    const imgEpoch2 = $("imgEpoch2");
+    const imgDifference = $("imgDifference");
+    const imgDiffLarge = $("imgDiffLarge");
+    const placeholderEpoch1 = $("placeholderEpoch1");
+    const placeholderEpoch2 = $("placeholderEpoch2");
+    const placeholderDifference = $("placeholderDifference");
+    const panelEpoch1Date = $("panelEpoch1Date");
+    const panelEpoch2Date = $("panelEpoch2Date");
+    const blinkImg1 = $("blinkImg1");
+    const blinkImg2 = $("blinkImg2");
+    const blinkTimelineImg = $("blinkTimelineImg");
+    const blinkIndicatorText = $("blinkIndicatorText");
+    const blinkIndicatorDot = $("blinkIndicatorDot");
+    const btnBlinkToggle = $("btnBlinkToggle");
+    const blinkIcon = $("blinkIcon");
+    const blinkText = $("blinkText");
+    const btnBlinkStep = $("btnBlinkStep");
+    const blinkSlider = $("blinkSlider");
+    const blinkRateLabel = $("blinkRateLabel");
+    const checkCrosshairs = $("checkCrosshairs");
+    const crosshairH = $("crosshairH");
+    const crosshairV = $("crosshairV");
+    const btnBlinkPair = $("btnBlinkPair");
+    const btnBlinkTimeline = $("btnBlinkTimeline");
+    const btnLoadTimeline = $("btnLoadTimeline");
+    const filmstrip = $("filmstrip");
+    const checkGaia = $("checkGaia");
+    const checkWise = $("checkWise");
+    const skyStatus = $("skyStatus");
+    const anomaliesTbody = $("anomaliesTbody");
+    const anomTableBadge = $("anomTableBadge");
+    const tableFilterInput = $("tableFilterInput");
+    const btnExportCSV = $("btnExportCSV");
+    const modalCombined = $("modalCombined");
+    const btnOpenModal = $("btnOpenModal");
+    const btnCloseModal = $("btnCloseModal");
+    const imgModalCombined = $("imgModalCombined");
 
-    const btnRunSubtraction = document.getElementById('btnRunSubtraction');
-    const runSpinner = document.getElementById('runSpinner');
-    const runButtonText = document.getElementById('runButtonText');
-
-    const statusAlert = document.getElementById('statusAlert');
-    const statusMessage = document.getElementById('statusMessage');
-
-    const statDeltaDays = document.getElementById('statDeltaDays');
-    const statStd = document.getElementById('statStd');
-    const statGridShape = document.getElementById('statGridShape');
-    const statAnomaliesCount = document.getElementById('statAnomaliesCount');
-
-    // Views & Tabs
-    const tab3Panel = document.getElementById('tab3Panel');
-    const tabBlink = document.getElementById('tabBlink');
-    const tabDifference = document.getElementById('tabDifference');
-    const view3Panel = document.getElementById('view3Panel');
-    const viewBlink = document.getElementById('viewBlink');
-    const viewDifference = document.getElementById('viewDifference');
-
-    // Images
-    const imgEpoch1 = document.getElementById('imgEpoch1');
-    const imgEpoch2 = document.getElementById('imgEpoch2');
-    const imgDifference = document.getElementById('imgDifference');
-    const imgDiffLarge = document.getElementById('imgDiffLarge');
-    const placeholderEpoch1 = document.getElementById('placeholderEpoch1');
-    const placeholderEpoch2 = document.getElementById('placeholderEpoch2');
-    const placeholderDifference = document.getElementById('placeholderDifference');
-    const panelEpoch1Date = document.getElementById('panelEpoch1Date');
-    const panelEpoch2Date = document.getElementById('panelEpoch2Date');
-
-    // Blink Elements
-    const blinkImg1 = document.getElementById('blinkImg1');
-    const blinkImg2 = document.getElementById('blinkImg2');
-    const blinkIndicatorText = document.getElementById('blinkIndicatorText');
-    const blinkIndicatorDot = document.getElementById('blinkIndicatorDot');
-    const btnBlinkToggle = document.getElementById('btnBlinkToggle');
-    const blinkIcon = document.getElementById('blinkIcon');
-    const blinkText = document.getElementById('blinkText');
-    const btnBlinkStep = document.getElementById('btnBlinkStep');
-    const blinkSlider = document.getElementById('blinkSlider');
-    const blinkRateLabel = document.getElementById('blinkRateLabel');
-    const checkCrosshairs = document.getElementById('checkCrosshairs');
-    const crosshairH = document.getElementById('crosshairH');
-    const crosshairV = document.getElementById('crosshairV');
-
-    // Table & Modal
-    const anomaliesTbody = document.getElementById('anomaliesTbody');
-    const anomTableBadge = document.getElementById('anomTableBadge');
-    const tableFilterInput = document.getElementById('tableFilterInput');
-    const btnExportCSV = document.getElementById('btnExportCSV');
-    const modalCombined = document.getElementById('modalCombined');
-    const btnOpenModal = document.getElementById('btnOpenModal');
-    const btnCloseModal = document.getElementById('btnCloseModal');
-    const imgModalCombined = document.getElementById('imgModalCombined');
-
-    // Helper: Toast Alert
     function showAlert(msg, isError = false) {
-      statusAlert.classList.remove('hidden', 'bg-red-950/60', 'border-red-800', 'text-red-200', 'bg-zinc-900', 'border-zinc-800', 'text-zinc-200');
-      if (isError) {
-        statusAlert.classList.add('bg-red-950/60', 'border-red-800', 'text-red-200');
-      } else {
-        statusAlert.classList.add('bg-zinc-900', 'border-zinc-800', 'text-zinc-200');
-      }
+      statusAlert.classList.remove("hidden", "bg-red-950/60", "border-red-800", "text-red-200", "bg-zinc-900", "border-zinc-800", "text-zinc-200");
+      if (isError) statusAlert.classList.add("bg-red-950/60", "border-red-800", "text-red-200");
+      else statusAlert.classList.add("bg-zinc-900", "border-zinc-800", "text-zinc-200");
       statusMessage.textContent = msg;
     }
 
-    // Tab Navigation
-    function setViewMode(mode) {
-      [tab3Panel, tabBlink, tabDifference].forEach(t => {
-        t.className = 'px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition';
-      });
-      [view3Panel, viewBlink, viewDifference].forEach(v => v.classList.add('hidden'));
-
-      if (mode === '3panel') {
-        tab3Panel.className = 'px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition';
-        view3Panel.classList.remove('hidden');
-        pauseBlink();
-      } else if (mode === 'blink') {
-        tabBlink.className = 'px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition';
-        viewBlink.classList.remove('hidden');
-        if (resultData) startBlink();
-      } else if (mode === 'diff') {
-        tabDifference.className = 'px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition';
-        viewDifference.classList.remove('hidden');
-        pauseBlink();
-      }
+    function inactiveTabClass() {
+      return "px-3 py-1 rounded text-zinc-400 hover:text-zinc-200 transition";
+    }
+    function activeTabClass() {
+      return "px-3 py-1 rounded bg-zinc-800 text-zinc-100 font-medium transition";
     }
 
-    tab3Panel.addEventListener('click', () => setViewMode('3panel'));
-    tabBlink.addEventListener('click', () => setViewMode('blink'));
-    tabDifference.addEventListener('click', () => setViewMode('diff'));
+    function setViewMode(mode, syncUrl = true) {
+      currentView = mode;
+      [tab3Panel, tabBlink, tabDifference, tabSky].forEach((t) => { t.className = inactiveTabClass(); });
+      [view3Panel, viewBlink, viewDifference, viewSky].forEach((v) => v.classList.add("hidden"));
 
-    // Threshold Slider
-    inputSigma.addEventListener('input', (e) => {
+      if (mode === "3panel") {
+        tab3Panel.className = activeTabClass();
+        view3Panel.classList.remove("hidden");
+        pauseBlink();
+      } else if (mode === "blink") {
+        tabBlink.className = activeTabClass();
+        viewBlink.classList.remove("hidden");
+        applyBlinkModeUI();
+        if (blinkMode === "pair" && resultData) startBlink();
+        else if (blinkMode === "timeline" && timelineFrames.length) startBlink();
+      } else if (mode === "diff") {
+        tabDifference.className = activeTabClass();
+        viewDifference.classList.remove("hidden");
+        pauseBlink();
+      } else if (mode === "sky") {
+        tabSky.className = activeTabClass();
+        viewSky.classList.remove("hidden");
+        pauseBlink();
+        ensureAladin().then(() => gotoAladin());
+      }
+      if (syncUrl) pushUrlState();
+    }
+
+    tab3Panel.addEventListener("click", () => setViewMode("3panel"));
+    tabBlink.addEventListener("click", () => setViewMode("blink"));
+    tabDifference.addEventListener("click", () => setViewMode("diff"));
+    tabSky.addEventListener("click", () => setViewMode("sky"));
+
+    inputSigma.addEventListener("input", (e) => {
       snrCutoffLabel.textContent = `${parseFloat(e.target.value).toFixed(1)} σ`;
+      pushUrlState();
+    });
+    selectCollapse.addEventListener("change", () => {
+      statCollapse.textContent = selectCollapse.value;
+      pushUrlState();
     });
 
-    // 1. Initialize Presets
     async function initPresets() {
       try {
-        const res = await fetch('/api/presets');
+        const res = await fetch("/api/presets");
         const data = await res.json();
         presets = data.presets || [];
         presetSelect.innerHTML = '<option value="">Custom Coordinates</option>';
-        presets.forEach(p => {
-          const opt = document.createElement('option');
+        presets.forEach((p) => {
+          const opt = document.createElement("option");
           opt.value = p.id;
           opt.textContent = `${p.name} (${p.category})`;
           presetSelect.appendChild(opt);
         });
-
-        if (presets.length > 0) {
+        if (!bootFromUrl && presets.length > 0) {
           presetSelect.value = presets[0].id;
-          applyPreset(presets[0]);
+          applyPreset(presets[0], false);
         }
       } catch (err) {
-        console.error('Failed to load presets:', err);
+        console.error("Failed to load presets:", err);
       }
     }
 
-    function applyPreset(p) {
+    function applyPreset(p, sync = true) {
       inputRA.value = p.ra;
       inputDec.value = p.dec;
       inputSize.value = p.size || 0.05;
-      selectBandpass.value = p.bandpass || 'SPHEREx-D2';
+      selectBandpass.value = p.bandpass || "SPHEREx-D2";
       targetNameBadge.textContent = p.name;
-      targetDescText.textContent = p.description;
+      targetDescText.textContent = p.description || "";
+      inputObjectName.value = "";
+      if (sync) pushUrlState();
     }
 
-    presetSelect.addEventListener('change', () => {
-      const match = presets.find(p => p.id === presetSelect.value);
+    presetSelect.addEventListener("change", () => {
+      const match = presets.find((p) => p.id === presetSelect.value);
       if (match) {
         applyPreset(match);
         fetchEpochs();
       }
     });
 
-    // 2. Fetch Archive Epochs
+    async function resolveObjectName() {
+      const name = inputObjectName.value.trim();
+      if (!name) {
+        showAlert("Enter an object name to resolve.", true);
+        return;
+      }
+      btnResolveName.disabled = true;
+      try {
+        const res = await fetch(`/api/resolve?name=${encodeURIComponent(name)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Resolve failed");
+        inputRA.value = data.ra;
+        inputDec.value = data.dec;
+        presetSelect.value = "";
+        targetNameBadge.textContent = data.name;
+        targetDescText.textContent = `Resolved via Sesame / SkyCoord · RA ${data.ra.toFixed(6)} · Dec ${data.dec.toFixed(6)}`;
+        showAlert(`Resolved “${data.name}” → RA ${data.ra.toFixed(5)}, Dec ${data.dec.toFixed(5)}`);
+        pushUrlState();
+        gotoAladin();
+      } catch (err) {
+        showAlert(err.message, true);
+      } finally {
+        btnResolveName.disabled = false;
+      }
+    }
+    btnResolveName.addEventListener("click", resolveObjectName);
+    inputObjectName.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") resolveObjectName();
+    });
+
     async function fetchEpochs() {
       const ra = parseFloat(inputRA.value);
       const dec = parseFloat(inputDec.value);
       const size = parseFloat(inputSize.value);
       const bandpass = selectBandpass.value;
-
       if (isNaN(ra) || isNaN(dec)) {
-        showAlert('Invalid coordinates supplied.', true);
+        showAlert("Invalid coordinates supplied.", true);
         return;
       }
 
       btnFetchEpochs.disabled = true;
       btnRunSubtraction.disabled = true;
-      btnRunSubtraction.classList.add('opacity-50', 'cursor-not-allowed');
-      fetchEpochsSpinner.classList.remove('hidden');
-      epochStatusText.textContent = 'Querying archive...';
+      btnRunSubtraction.classList.add("opacity-50", "cursor-not-allowed");
+      fetchEpochsSpinner.classList.remove("hidden");
+      epochStatusText.textContent = "Querying archive...";
 
       try {
         const url = `/api/epochs?ra=${ra}&dec=${dec}&size=${size}&bandpass=${encodeURIComponent(bandpass)}`;
         const res = await fetch(url);
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.detail || 'TAP query failure');
+          throw new Error(err.detail || "TAP query failure");
         }
         const data = await res.json();
         currentEpochs = data.epochs || [];
-
         epochCountBadge.textContent = `${currentEpochs.length} Epochs`;
         epochStatusText.textContent = `Found ${currentEpochs.length} observations`;
         showAlert(`Retrieved ${currentEpochs.length} observations from IRSA TAP.`);
         populateEpochSelectors();
+        pushUrlState();
+        gotoAladin();
       } catch (err) {
         showAlert(err.message, true);
-        epochStatusText.textContent = 'Query failed';
+        epochStatusText.textContent = "Query failed";
       } finally {
         btnFetchEpochs.disabled = false;
         btnRunSubtraction.disabled = false;
-        btnRunSubtraction.classList.remove('opacity-50', 'cursor-not-allowed');
-        fetchEpochsSpinner.classList.add('hidden');
+        btnRunSubtraction.classList.remove("opacity-50", "cursor-not-allowed");
+        fetchEpochsSpinner.classList.add("hidden");
       }
     }
 
     function populateEpochSelectors() {
-      selectEpoch1.innerHTML = '';
-      selectEpoch2.innerHTML = '';
-
+      selectEpoch1.innerHTML = "";
+      selectEpoch2.innerHTML = "";
       if (currentEpochs.length === 0) {
         selectEpoch1.innerHTML = '<option value="0">None available</option>';
         selectEpoch2.innerHTML = '<option value="-1">None available</option>';
         return;
       }
-
       currentEpochs.forEach((ep, idx) => {
         const label = `#${idx} • ${ep.date_human.slice(0, 10)} • MJD ${ep.t_min.toFixed(1)}`;
-        
-        const opt1 = document.createElement('option');
+        const opt1 = document.createElement("option");
         opt1.value = idx;
         opt1.textContent = label;
         selectEpoch1.appendChild(opt1);
-
-        const opt2 = document.createElement('option');
+        const opt2 = document.createElement("option");
         opt2.value = idx;
         opt2.textContent = label;
         selectEpoch2.appendChild(opt2);
       });
-
-      selectEpoch1.value = 0;
-      selectEpoch2.value = currentEpochs.length - 1;
+      const q = new URLSearchParams(location.search);
+      const e1 = q.get("e1");
+      const e2 = q.get("e2");
+      selectEpoch1.value = e1 != null && e1 !== "" ? e1 : 0;
+      selectEpoch2.value = e2 != null && e2 !== "" ? e2 : currentEpochs.length - 1;
     }
 
-    btnFetchEpochs.addEventListener('click', fetchEpochs);
+    btnFetchEpochs.addEventListener("click", fetchEpochs);
+    selectEpoch1.addEventListener("change", pushUrlState);
+    selectEpoch2.addEventListener("change", pushUrlState);
+    selectBandpass.addEventListener("change", pushUrlState);
+    inputRA.addEventListener("change", pushUrlState);
+    inputDec.addEventListener("change", pushUrlState);
+    inputSize.addEventListener("change", pushUrlState);
+    inputMaxFrames.addEventListener("change", pushUrlState);
 
-    // 3. Subtraction Execution
     async function executeSubtraction() {
       const ra = parseFloat(inputRA.value);
       const dec = parseFloat(inputDec.value);
       const size = parseFloat(inputSize.value);
       const bandpass = selectBandpass.value;
-      const idx1 = parseInt(selectEpoch1.value);
-      const idx2 = parseInt(selectEpoch2.value);
+      const idx1 = parseInt(selectEpoch1.value, 10);
+      const idx2 = parseInt(selectEpoch2.value, 10);
       const sigma = parseFloat(inputSigma.value);
+      const collapse_mode = selectCollapse.value;
 
       if (currentEpochs.length >= 2 && idx1 === idx2) {
-        showAlert('Select two distinct observation epochs for subtraction.', true);
+        showAlert("Select two distinct observation epochs for subtraction.", true);
         return;
       }
 
       btnRunSubtraction.disabled = true;
-      runSpinner.classList.remove('hidden');
-      runButtonText.textContent = 'Aligning & Subtracting...';
-      showAlert('Downloading FITS cutouts, computing WCS reprojection & background subtraction...');
+      runSpinner.classList.remove("hidden");
+      runButtonText.textContent = "Aligning & Subtracting...";
+      showAlert("Downloading FITS cutouts, computing WCS reprojection & background subtraction...");
 
       try {
         const payload = {
-          ra: ra,
-          dec: dec,
-          size: size,
-          bandpass: bandpass,
+          ra, dec, size, bandpass,
           epoch1_index: isNaN(idx1) ? 0 : idx1,
           epoch2_index: isNaN(idx2) ? -1 : idx2,
-          sigma_thresh: sigma
+          sigma_thresh: sigma,
+          collapse_mode,
         };
-
-        const res = await fetch('/api/subtract', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+        const res = await fetch("/api/subtract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
-
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.detail || 'Subtraction execution failed');
+          throw new Error(err.detail || "Subtraction execution failed");
         }
-
         resultData = await res.json();
         renderWorkspace(resultData);
+        if (blinkMode === "pair") setBlinkMode("pair", false);
         showAlert(`Subtraction complete. Identified ${resultData.anomalies_count} anomalies at >${sigma}σ significance.`);
+        pushUrlState();
+        if (aladin) plotAnomalyMarkers(resultData.anomalies || []);
       } catch (err) {
         showAlert(err.message, true);
       } finally {
         btnRunSubtraction.disabled = false;
-        runSpinner.classList.add('hidden');
-        runButtonText.textContent = 'Execute Subtraction Pipeline';
+        runSpinner.classList.add("hidden");
+        runButtonText.textContent = "Execute Subtraction Pipeline";
       }
     }
-
-    btnRunSubtraction.addEventListener('click', executeSubtraction);
-
-    // Keyboard shortcut (Enter to execute)
-    window.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        executeSubtraction();
-      }
+    btnRunSubtraction.addEventListener("click", executeSubtraction);
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") executeSubtraction();
     });
 
-    // 4. Render Workspace & Figures
     function renderWorkspace(data) {
-      // Summary Metrics
       statDeltaDays.textContent = `${data.delta_days} d`;
       statStd.textContent = `${data.stats.std.toFixed(4)}`;
       statGridShape.textContent = `${data.grid_shape[0]} × ${data.grid_shape[1]}`;
+      statCollapse.textContent = data.collapse_mode || selectCollapse.value;
       statAnomaliesCount.textContent = `${data.anomalies_count}`;
-
-      // Dates
       panelEpoch1Date.textContent = data.epoch1.date_human.slice(0, 10);
       panelEpoch2Date.textContent = data.epoch2.date_human.slice(0, 10);
-
-      // Panel 1, 2, Diff
-      placeholderEpoch1.classList.add('hidden');
-      placeholderEpoch2.classList.add('hidden');
-      placeholderDifference.classList.add('hidden');
-
+      placeholderEpoch1.classList.add("hidden");
+      placeholderEpoch2.classList.add("hidden");
+      placeholderDifference.classList.add("hidden");
       imgEpoch1.src = data.images_base64.epoch1_png;
-      imgEpoch1.classList.remove('hidden');
-
+      imgEpoch1.classList.remove("hidden");
       imgEpoch2.src = data.images_base64.epoch2_png;
-      imgEpoch2.classList.remove('hidden');
-
+      imgEpoch2.classList.remove("hidden");
       imgDifference.src = data.images_base64.difference_png;
-      imgDifference.classList.remove('hidden');
-
+      imgDifference.classList.remove("hidden");
       imgDiffLarge.src = data.images_base64.difference_png;
       imgModalCombined.src = data.images_base64.combined_png;
-
-      // Blink images
       blinkImg1.src = data.images_base64.epoch1_png;
       blinkImg2.src = data.images_base64.epoch2_png;
-
-      // Table
       renderTable(data.anomalies);
     }
 
-    // 5. Blink Comparator Engine
+    function applyBlinkModeUI() {
+      const pairActive = blinkMode === "pair";
+      btnBlinkPair.className = pairActive
+        ? "flex-1 py-1 rounded bg-zinc-800 text-zinc-100 font-medium"
+        : "flex-1 py-1 rounded text-zinc-400 hover:text-zinc-200";
+      btnBlinkTimeline.className = !pairActive
+        ? "flex-1 py-1 rounded bg-zinc-800 text-zinc-100 font-medium"
+        : "flex-1 py-1 rounded text-zinc-400 hover:text-zinc-200";
+      btnLoadTimeline.classList.toggle("hidden", pairActive);
+      filmstrip.classList.toggle("hidden", pairActive || !timelineFrames.length);
+      if (pairActive) {
+        blinkTimelineImg.classList.add("hidden");
+        blinkImg1.classList.remove("hidden");
+        blinkImg2.classList.remove("hidden");
+      } else {
+        blinkImg1.style.opacity = "0";
+        blinkImg2.style.opacity = "0";
+        blinkImg1.classList.add("hidden");
+        blinkImg2.classList.add("hidden");
+        blinkTimelineImg.classList.remove("hidden");
+      }
+    }
+
+    function setBlinkMode(mode, syncUrl = true) {
+      blinkMode = mode;
+      pauseBlink();
+      applyBlinkModeUI();
+      if (mode === "pair") {
+        blinkFrame = 1;
+        if (resultData) {
+          blinkImg1.style.opacity = "1";
+          blinkImg2.style.opacity = "0";
+          blinkIndicatorText.textContent = `EPOCH 1 (${resultData.epoch1.date_human.slice(0, 10)})`;
+        }
+      } else if (timelineFrames.length) {
+        showTimelineFrame(timelineIdx);
+      } else {
+        blinkIndicatorText.textContent = "Timeline · load frames";
+      }
+      if (syncUrl) pushUrlState();
+    }
+
+    btnBlinkPair.addEventListener("click", () => setBlinkMode("pair"));
+    btnBlinkTimeline.addEventListener("click", () => setBlinkMode("timeline"));
+
+    async function loadTimeline() {
+      if (currentEpochs.length < 1) {
+        showAlert("Query the archive first to load a timeline.", true);
+        return;
+      }
+      btnLoadTimeline.disabled = true;
+      showAlert("Loading timeline frames from IRSA…");
+      try {
+        const payload = {
+          ra: parseFloat(inputRA.value),
+          dec: parseFloat(inputDec.value),
+          size: parseFloat(inputSize.value),
+          bandpass: selectBandpass.value,
+          collapse_mode: selectCollapse.value,
+          max_frames: parseInt(inputMaxFrames.value, 10) || 8,
+        };
+        const res = await fetch("/api/timeline", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Timeline failed");
+        }
+        const data = await res.json();
+        timelineFrames = data.frames || [];
+        timelineIdx = 0;
+        renderFilmstrip();
+        applyBlinkModeUI();
+        showTimelineFrame(0);
+        showAlert(`Timeline ready · ${timelineFrames.length} frames (of ${data.total_epochs_available} epochs).`);
+        if (currentView === "blink" && blinkMode === "timeline") startBlink();
+        pushUrlState();
+      } catch (err) {
+        showAlert(err.message, true);
+      } finally {
+        btnLoadTimeline.disabled = false;
+      }
+    }
+    btnLoadTimeline.addEventListener("click", loadTimeline);
+
+    function renderFilmstrip() {
+      filmstrip.innerHTML = "";
+      timelineFrames.forEach((fr, i) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "filmstrip-dot" + (i === timelineIdx ? " active" : "");
+        dot.title = fr.date_human;
+        dot.addEventListener("click", () => {
+          pauseBlink();
+          showTimelineFrame(i);
+        });
+        filmstrip.appendChild(dot);
+      });
+      filmstrip.classList.toggle("hidden", blinkMode !== "timeline" || !timelineFrames.length);
+    }
+
+    function showTimelineFrame(i) {
+      if (!timelineFrames.length) return;
+      timelineIdx = ((i % timelineFrames.length) + timelineFrames.length) % timelineFrames.length;
+      const fr = timelineFrames[timelineIdx];
+      blinkTimelineImg.src = fr.png_base64;
+      blinkIndicatorDot.className = "w-1.5 h-1.5 rounded-full bg-amber-500";
+      blinkIndicatorText.textContent = `${timelineIdx + 1}/${timelineFrames.length} · ${fr.date_human.slice(0, 10)}`;
+      [...filmstrip.children].forEach((el, idx) => {
+        el.classList.toggle("active", idx === timelineIdx);
+      });
+    }
+
     function startBlink() {
       if (blinkInterval) clearInterval(blinkInterval);
+      if (blinkMode === "timeline" && !timelineFrames.length) return;
+      if (blinkMode === "pair" && !resultData) return;
       isBlinking = true;
-      blinkIcon.textContent = '⏸';
-      blinkText.textContent = 'Pause';
+      blinkIcon.textContent = "⏸";
+      blinkText.textContent = "Pause";
       blinkInterval = setInterval(toggleBlinkFrame, blinkSpeed);
     }
 
@@ -836,93 +975,85 @@
       if (blinkInterval) clearInterval(blinkInterval);
       blinkInterval = null;
       isBlinking = false;
-      blinkIcon.textContent = '▶';
-      blinkText.textContent = 'Play';
+      blinkIcon.textContent = "▶";
+      blinkText.textContent = "Play";
     }
 
     function toggleBlinkFrame() {
+      if (blinkMode === "timeline") {
+        showTimelineFrame(timelineIdx + 1);
+        return;
+      }
       if (blinkFrame === 1) {
         blinkFrame = 2;
-        blinkImg1.style.opacity = '0';
-        blinkImg2.style.opacity = '1';
-        blinkIndicatorDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
-        blinkIndicatorText.textContent = `EPOCH 2 (${resultData ? resultData.epoch2.date_human.slice(0, 10) : 'Target'})`;
+        blinkImg1.style.opacity = "0";
+        blinkImg2.style.opacity = "1";
+        blinkIndicatorDot.className = "w-1.5 h-1.5 rounded-full bg-amber-500";
+        blinkIndicatorText.textContent = `EPOCH 2 (${resultData ? resultData.epoch2.date_human.slice(0, 10) : "Target"})`;
       } else {
         blinkFrame = 1;
-        blinkImg1.style.opacity = '1';
-        blinkImg2.style.opacity = '0';
-        blinkIndicatorDot.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
-        blinkIndicatorText.textContent = `EPOCH 1 (${resultData ? resultData.epoch1.date_human.slice(0, 10) : 'Baseline'})`;
+        blinkImg1.style.opacity = "1";
+        blinkImg2.style.opacity = "0";
+        blinkIndicatorDot.className = "w-1.5 h-1.5 rounded-full bg-zinc-400";
+        blinkIndicatorText.textContent = `EPOCH 1 (${resultData ? resultData.epoch1.date_human.slice(0, 10) : "Baseline"})`;
       }
     }
 
-    btnBlinkToggle.addEventListener('click', () => {
+    btnBlinkToggle.addEventListener("click", () => {
       if (isBlinking) pauseBlink();
       else startBlink();
     });
-
-    btnBlinkStep.addEventListener('click', () => {
+    btnBlinkStep.addEventListener("click", () => {
       pauseBlink();
       toggleBlinkFrame();
     });
-
-    blinkSlider.addEventListener('input', (e) => {
-      blinkSpeed = parseInt(e.target.value);
+    blinkSlider.addEventListener("input", (e) => {
+      blinkSpeed = parseInt(e.target.value, 10);
       blinkRateLabel.textContent = `${blinkSpeed} ms`;
       if (isBlinking) startBlink();
     });
-
-    checkCrosshairs.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        crosshairH.classList.remove('hidden');
-        crosshairV.classList.remove('hidden');
-      } else {
-        crosshairH.classList.add('hidden');
-        crosshairV.classList.add('hidden');
-      }
+    checkCrosshairs.addEventListener("change", (e) => {
+      crosshairH.classList.toggle("hidden", !e.target.checked);
+      crosshairV.classList.toggle("hidden", !e.target.checked);
     });
 
-    // 6. Anomalies Discovery Table
     function renderTable(anomalies) {
       anomTableBadge.textContent = `${anomalies.length} Candidates`;
-      anomaliesTbody.innerHTML = '';
-
+      anomaliesTbody.innerHTML = "";
       if (!anomalies || anomalies.length === 0) {
         anomaliesTbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-zinc-600">No candidates detected above threshold.</td></tr>';
         return;
       }
-
       anomalies.forEach((a, i) => {
-        const isPos = a.type.includes('Positive');
-        const badgeClass = isPos 
-          ? 'text-emerald-400 border border-emerald-500/20 bg-emerald-500/10' 
-          : 'text-rose-400 border border-rose-500/20 bg-rose-500/10';
-        const snrColor = isPos ? 'text-emerald-400' : 'text-rose-400';
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-zinc-900 transition-colors cursor-pointer';
+        const isPos = a.type.includes("Positive");
+        const badgeClass = isPos
+          ? "text-emerald-400 border border-emerald-500/20 bg-emerald-500/10"
+          : "text-rose-400 border border-rose-500/20 bg-rose-500/10";
+        const snrColor = isPos ? "text-emerald-400" : "text-rose-400";
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-zinc-900 transition-colors cursor-pointer";
         tr.innerHTML = `
           <td class="py-2 px-3 text-zinc-500">#${i + 1}</td>
           <td class="py-2 px-3">
             <span class="inline-block px-1.5 py-0.5 rounded text-[10px] ${badgeClass}">
-              ${isPos ? 'Positive Dipole' : 'Negative Dipole'}
+              ${isPos ? "Positive Dipole" : "Negative Dipole"}
             </span>
           </td>
-          <td class="py-2 px-3 font-semibold ${snrColor}">${a.snr > 0 ? '+' : ''}${a.snr.toFixed(2)}σ</td>
-          <td class="py-2 px-3 text-zinc-300">${a.flux_diff > 0 ? '+' : ''}${a.flux_diff.toFixed(5)}</td>
+          <td class="py-2 px-3 font-semibold ${snrColor}">${a.snr > 0 ? "+" : ""}${a.snr.toFixed(2)}σ</td>
+          <td class="py-2 px-3 text-zinc-300">${a.flux_diff > 0 ? "+" : ""}${a.flux_diff.toFixed(5)}</td>
           <td class="py-2 px-3 text-zinc-200">${a.ra.toFixed(6)}°</td>
           <td class="py-2 px-3 text-zinc-200">${a.dec.toFixed(6)}°</td>
           <td class="py-2 px-3 text-zinc-500">(${a.pixel_x}, ${a.pixel_y})</td>
         `;
+        tr.addEventListener("click", () => focusAnomalyOnSky(a));
         anomaliesTbody.appendChild(tr);
       });
     }
 
-    // Filter Table
-    tableFilterInput.addEventListener('input', (e) => {
+    tableFilterInput.addEventListener("input", (e) => {
       const q = e.target.value.toLowerCase();
       if (!resultData) return;
-      const filtered = resultData.anomalies.filter(a => 
+      const filtered = resultData.anomalies.filter((a) =>
         a.type.toLowerCase().includes(q) ||
         a.snr.toString().includes(q) ||
         a.ra.toString().includes(q) ||
@@ -931,41 +1062,224 @@
       renderTable(filtered);
     });
 
-    // CSV Export
-    btnExportCSV.addEventListener('click', () => {
+    btnExportCSV.addEventListener("click", () => {
       if (!resultData || !resultData.anomalies.length) return;
-      const headers = ['Rank', 'Type', 'SNR', 'Delta_Flux_MJy_sr', 'RA_deg', 'Dec_deg', 'Pixel_X', 'Pixel_Y'];
+      const headers = ["Rank", "Type", "SNR", "Delta_Flux_MJy_sr", "RA_deg", "Dec_deg", "Pixel_X", "Pixel_Y"];
       const rows = resultData.anomalies.map((a, i) => [
-        i + 1,
-        `"${a.type}"`,
-        a.snr,
-        a.flux_diff,
-        a.ra,
-        a.dec,
-        a.pixel_x,
-        a.pixel_y
+        i + 1, `"${a.type}"`, a.snr, a.flux_diff, a.ra, a.dec, a.pixel_x, a.pixel_y
       ]);
-      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `SPHEREx_anomalies_${inputRA.value}_${inputDec.value}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     });
 
-    // Modal
-    btnOpenModal.addEventListener('click', () => modalCombined.classList.remove('hidden'));
-    btnCloseModal.addEventListener('click', () => modalCombined.classList.add('hidden'));
-    modalCombined.addEventListener('click', (e) => {
-      if (e.target === modalCombined) modalCombined.classList.add('hidden');
+    btnOpenModal.addEventListener("click", () => modalCombined.classList.remove("hidden"));
+    btnCloseModal.addEventListener("click", () => modalCombined.classList.add("hidden"));
+    modalCombined.addEventListener("click", (e) => {
+      if (e.target === modalCombined) modalCombined.classList.add("hidden");
     });
 
-    // Boot
-    window.addEventListener('DOMContentLoaded', async () => {
+    // ── Sky Context / Aladin ─────────────────────────────────────────────
+    function ensureAladin() {
+      return new Promise((resolve) => {
+        if (aladin) {
+          resolve(aladin);
+          return;
+        }
+        const tryInit = () => {
+          if (!window.A) return false;
+          try {
+            aladin = window.A.aladin("#aladin-lite-div", {
+              survey: HIPS_DSS,
+              fov: Math.max(parseFloat(inputSize.value) * 4, 0.35),
+              target: `${inputRA.value} ${inputDec.value}`,
+              showReticle: true,
+              showZoomControl: true,
+              showFullscreenControl: true,
+              showLayersControl: true,
+              showGotoControl: true,
+              showCooGrid: false,
+            });
+            skyStatus.textContent = "Aladin ready";
+            if (checkGaia.checked) toggleGaia(true);
+            if (checkWise.checked) aladin.setImageSurvey(HIPS_WISE);
+            if (resultData) plotAnomalyMarkers(resultData.anomalies || []);
+            resolve(aladin);
+            return true;
+          } catch (err) {
+            console.warn("Aladin init failed", err);
+            skyStatus.textContent = "Aladin init failed";
+            resolve(null);
+            return true;
+          }
+        };
+        if (tryInit()) return;
+        skyStatus.textContent = "Loading Aladin…";
+        window.addEventListener("aladin-ready", () => tryInit(), { once: true });
+        setTimeout(() => { if (!aladin) tryInit(); }, 2500);
+      });
+    }
+
+    function gotoAladin() {
+      if (!aladin) return;
+      const ra = parseFloat(inputRA.value);
+      const dec = parseFloat(inputDec.value);
+      const fov = Math.max(parseFloat(inputSize.value) * 4, 0.35);
+      try {
+        aladin.gotoRaDec(ra, dec);
+        aladin.setFov(fov);
+        skyStatus.textContent = `Centered ${ra.toFixed(4)}, ${dec.toFixed(4)}`;
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+
+    async function toggleGaia(forceOn) {
+      const on = forceOn === true || checkGaia.checked;
+      if (!aladin) await ensureAladin();
+      if (!aladin) return;
+      if (!on) {
+        if (gaiaCat) {
+          try { aladin.removeCatalog(gaiaCat); } catch (_) {}
+          gaiaCat = null;
+        }
+        pushUrlState();
+        return;
+      }
+      const ra = parseFloat(inputRA.value);
+      const dec = parseFloat(inputDec.value);
+      const radius = Math.max(parseFloat(inputSize.value), 0.05);
+      try {
+        if (gaiaCat) {
+          try { aladin.removeCatalog(gaiaCat); } catch (_) {}
+        }
+        gaiaCat = await window.A.catalogFromVizieR(
+          "I/355/gaiadr3",
+          `${ra} ${dec}`,
+          radius,
+          { onClick: "showTable", name: "Gaia DR3" }
+        );
+        aladin.addCatalog(gaiaCat);
+        skyStatus.textContent = "Gaia DR3 overlay on";
+      } catch (err) {
+        console.warn("Gaia overlay failed", err);
+        skyStatus.textContent = "Gaia overlay unavailable";
+      }
+      pushUrlState();
+    }
+
+    checkGaia.addEventListener("change", () => toggleGaia());
+    checkWise.addEventListener("change", async () => {
+      if (!aladin) await ensureAladin();
+      if (!aladin) return;
+      aladin.setImageSurvey(checkWise.checked ? HIPS_WISE : HIPS_DSS);
+      pushUrlState();
+    });
+
+    function plotAnomalyMarkers(anomalies) {
+      if (!aladin || !window.A) return;
+      try {
+        if (anomalyOverlay) {
+          try { aladin.removeCatalog(anomalyOverlay); } catch (_) {}
+        }
+        anomalyOverlay = window.A.catalog({ name: "SPHEREx anomalies", sourceSize: 14 });
+        (anomalies || []).slice(0, 40).forEach((a) => {
+          const color = String(a.type || "").includes("Positive") ? "#10b981" : "#f43f5e";
+          anomalyOverlay.addSources([
+            window.A.source(a.ra, a.dec, { color, name: `${a.snr}σ` }),
+          ]);
+        });
+        aladin.addCatalog(anomalyOverlay);
+      } catch (err) {
+        console.warn("anomaly overlay failed", err);
+      }
+    }
+
+    async function focusAnomalyOnSky(a) {
+      setViewMode("sky");
+      await ensureAladin();
+      if (!aladin) return;
+      try {
+        aladin.gotoRaDec(a.ra, a.dec);
+        aladin.setFov(Math.max(parseFloat(inputSize.value), 0.08));
+        skyStatus.textContent = `Candidate ${a.ra.toFixed(5)}, ${a.dec.toFixed(5)} · ${a.snr}σ`;
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+
+    // ── URL state (S5) ───────────────────────────────────────────────────
+    function pushUrlState() {
+      if (suppressingUrl) return;
+      const q = new URLSearchParams({
+        ra: inputRA.value,
+        dec: inputDec.value,
+        size: inputSize.value,
+        band: selectBandpass.value,
+        collapse: selectCollapse.value,
+        e1: selectEpoch1.value,
+        e2: selectEpoch2.value,
+        sigma: inputSigma.value,
+        view: currentView,
+        blinkMode,
+        gaia: checkGaia.checked ? "1" : "0",
+        wise: checkWise.checked ? "1" : "0",
+        maxf: inputMaxFrames.value,
+      });
+      if (inputObjectName.value.trim()) q.set("name", inputObjectName.value.trim());
+      history.replaceState(null, "", "?" + q.toString());
+    }
+
+    function readUrlState() {
+      const q = new URLSearchParams(location.search);
+      bootFromUrl = [...q.keys()].length > 0;
+      if (q.has("ra")) inputRA.value = q.get("ra");
+      if (q.has("dec")) inputDec.value = q.get("dec");
+      if (q.has("size")) inputSize.value = q.get("size");
+      if (q.has("band")) selectBandpass.value = q.get("band");
+      if (q.has("collapse")) selectCollapse.value = q.get("collapse");
+      if (q.has("sigma")) {
+        inputSigma.value = q.get("sigma");
+        snrCutoffLabel.textContent = `${parseFloat(inputSigma.value).toFixed(1)} σ`;
+      }
+      if (q.has("maxf")) inputMaxFrames.value = q.get("maxf");
+      if (q.has("name")) inputObjectName.value = q.get("name");
+      if (q.get("gaia") === "1") checkGaia.checked = true;
+      if (q.get("wise") === "1") checkWise.checked = true;
+      if (q.get("blinkMode") === "timeline") blinkMode = "timeline";
+      statCollapse.textContent = selectCollapse.value;
+      return {
+        view: q.get("view") || "3panel",
+        run: q.get("run") === "1",
+        hasCoords: q.has("ra") && q.has("dec"),
+      };
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      suppressingUrl = true;
+      const urlInfo = readUrlState();
       await initPresets();
-      fetchEpochs();
+      if (bootFromUrl && urlInfo.hasCoords) presetSelect.value = "";
+      suppressingUrl = false;
+
+      applyBlinkModeUI();
+      setViewMode(urlInfo.view, false);
+
+      if (urlInfo.hasCoords || !bootFromUrl) {
+        await fetchEpochs();
+      }
+
+      if (urlInfo.view === "sky") await ensureAladin();
+      pushUrlState();
+
+      if (urlInfo.run) {
+        await executeSubtraction();
+      }
     });
   </script>
 </body>

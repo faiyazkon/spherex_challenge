@@ -6,3 +6,4 @@ pyvo
 reproject
 matplotlib
 requests
+scipy

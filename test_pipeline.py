@@ -62,7 +62,7 @@ print(f"       Epoch 2 FITS: {fits_url2}")
 
 # ── Step 4: Subtract ────────────────────────────────────────────────────────
 print("\n[4/5] Loading, cleaning, reprojecting, and subtracting …")
-epoch1, epoch2_aligned, difference, wcs1 = subtract_epochs(
+epoch1, epoch2_aligned, difference, wcs1, _meta = subtract_epochs(
     fits_url1, fits_url2
 )
 print("       Done.")
